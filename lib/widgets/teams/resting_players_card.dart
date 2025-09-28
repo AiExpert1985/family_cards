@@ -23,7 +23,7 @@ class RestingPlayersCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 const Text(
-                  'اللاعبون تحت الراحة',
+                  'على دكة الاحتياط',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange),
                 ),
                 const SizedBox(width: 8),

@@ -1,5 +1,6 @@
+// Remove the unused import and variable
 // ============== services/team_generator_service.dart ==============
-import '../models/player.dart';
+import '../models/player.dart'; // Remove dart:math import
 import '../models/team_generation_result.dart';
 
 class TeamGeneratorService {
@@ -18,17 +19,9 @@ class TeamGeneratorService {
 
     final selectedPlayers = allPlayers.where((p) => selectedPlayerIds.contains(p.id)).toList();
 
-    // Find players who haven't rested yet in this cycle
-    final notRestedYet = selectedPlayers.where((p) => !restedPlayerIds.contains(p.id)).toList();
-
-    // Reset cycle if everyone has rested (no one left who hasn't rested)
-    final playersToChooseFrom = notRestedYet.isEmpty ? selectedPlayers : notRestedYet;
-
-    // Calculate rest count: remainder when dividing by 4
     final totalSelected = selectedPlayers.length;
     final restingCount = totalSelected % 4 == 0 ? 0 : totalSelected % 4;
 
-    // If no one needs to rest (multiple of 4), everyone plays
     if (restingCount == 0) {
       selectedPlayers.shuffle();
       final teams = <List<Player>>[];
@@ -38,19 +31,34 @@ class TeamGeneratorService {
       return TeamGenerationResult(teams: teams, restingPlayers: []);
     }
 
-    // Select resting players randomly from eligible players
-    playersToChooseFrom.shuffle();
-    final restingPlayers = playersToChooseFrom.take(restingCount).toList();
+    final notRestedYet = selectedPlayers.where((p) => !restedPlayerIds.contains(p.id)).toList();
 
-    // Remaining players form teams
+    final restingPlayers = <Player>[];
+
+    if (notRestedYet.length >= restingCount) {
+      // Normal case
+      notRestedYet.shuffle();
+      restingPlayers.addAll(notRestedYet.take(restingCount));
+    } else {
+      // Edge case: cycle reset needed
+      restingPlayers.addAll(notRestedYet);
+
+      final eligibleForNewCycle =
+          selectedPlayers.where((p) => !restingPlayers.contains(p)).toList()..shuffle();
+
+      final stillNeeded = restingCount - notRestedYet.length;
+      restingPlayers.addAll(eligibleForNewCycle.take(stillNeeded));
+    }
+
     final playingPlayers =
         selectedPlayers.where((p) => !restingPlayers.any((resting) => resting.id == p.id)).toList()
           ..shuffle();
 
-    // Create teams of 2 players each
     final teams = <List<Player>>[];
     for (int i = 0; i < playingPlayers.length; i += 2) {
-      teams.add([playingPlayers[i], playingPlayers[i + 1]]);
+      if (i + 1 < playingPlayers.length) {
+        teams.add([playingPlayers[i], playingPlayers[i + 1]]);
+      }
     }
 
     return TeamGenerationResult(teams: teams, restingPlayers: restingPlayers);

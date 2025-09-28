@@ -52,17 +52,16 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       selectedPlayerIds: selectedIds,
       restedPlayerIds: activeRestedIds,
     );
-
     if (result.isSuccess) {
-      // Check if we need to reset cycle (everyone has rested)
       final notRestedYet = selectedIds.where((id) => !activeRestedIds.contains(id)).toSet();
 
       Set<String> newRestedIds;
-      if (notRestedYet.isEmpty) {
-        // New cycle - only the current resting players are marked as rested
-        newRestedIds = result.restingPlayers.map((p) => p.id).toSet();
+      if (notRestedYet.length < result.restingPlayers.length) {
+        // Cycle reset occurred - only new cycle players go into rested list
+        final newCyclePlayers = result.restingPlayers.skip(notRestedYet.length);
+        newRestedIds = newCyclePlayers.map((p) => p.id).toSet();
       } else {
-        // Continue current cycle - add new resting players to existing
+        // Normal operation
         newRestedIds = Set<String>.from(activeRestedIds)
           ..addAll(result.restingPlayers.map((p) => p.id));
       }
@@ -81,13 +80,19 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
   }
 
   Future<void> _showPlayerSelectionDialog() async {
+    // Ensure data is loaded before showing dialog
+    await ref.read(playersProvider.notifier).loadPlayers();
+    await ref.read(restedPlayersProvider.notifier).loadRestedPlayers();
+
     final players = ref.read(playersProvider).value ?? [];
     final currentSelection = ref.read(selectedPlayersProvider).value ?? {};
     final restedIds = ref.read(restedPlayersProvider).value ?? {};
 
+    if (!mounted) return;
+
     final result = await showDialog<Set<String>>(
       context: context,
-      barrierDismissible: false, // Add this line
+      barrierDismissible: false,
       builder:
           (context) => _PlayerSelectionDialog(
             players: players,
@@ -101,6 +106,46 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       setState(() {
         _result = null;
       });
+    }
+  }
+
+  Future<void> _resetCycle() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('إعادة تعيين الدورة', textAlign: TextAlign.right),
+            content: const Text(
+              'هل تريد بدء دورة جديدة؟ سيتم اعتبار جميع اللاعبين كأنهم لم يستريحوا من قبل.',
+              textAlign: TextAlign.right,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('إلغاء'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                child: const Text('إعادة تعيين'),
+              ),
+            ],
+          ),
+    );
+
+    if (confirm == true) {
+      await ref.read(restedPlayersProvider.notifier).updateRested({});
+      setState(() {
+        _result = null;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم إعادة تعيين الدورة بنجاح'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     }
   }
 
@@ -125,7 +170,9 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.check_box),
                 label: Text(
-                  'اختيار اللاعبين المشاركين ($selectedCount مختار)',
+                  selectedCount > 0
+                      ? 'اختيار اللاعبين المشاركين ($selectedCount مختار)'
+                      : 'اختيار اللاعبين المشاركين',
                   style: const TextStyle(fontSize: 16),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -167,7 +214,24 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
               ),
             ),
           ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: TextButton.icon(
+                icon: const Icon(Icons.refresh),
+                label: const Text('إعادة تعيين دورة الاستراحة'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.orange,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: _resetCycle,
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
+
           Expanded(child: _buildResultsView()),
         ],
       ),
@@ -295,10 +359,13 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                 : ListView.builder(
                   shrinkWrap: true,
                   itemCount: widget.players.length,
+
+                  // In random_teams_page.dart, update the ListView.builder in _PlayerSelectionDialog:
                   itemBuilder: (context, index) {
                     final player = widget.players[index];
                     final isSelected = _currentSelection.contains(player.id);
-                    final hasRested = widget.restedIds.contains(player.id) && isSelected;
+                    // Show green check for players who have rested (regardless of current selection)
+                    final hasRested = widget.restedIds.contains(player.id);
 
                     return ListTile(
                       title: Text(player.name, textAlign: TextAlign.right),
@@ -317,6 +384,22 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
+        TextButton(
+          onPressed: () {
+            setState(() {
+              _currentSelection.clear();
+            });
+          },
+          child: const Text('إلغاء تحديد الكل'),
+        ),
+        TextButton(
+          onPressed: () {
+            setState(() {
+              _currentSelection.addAll(widget.players.map((p) => p.id));
+            });
+          },
+          child: const Text('تحديد الكل'),
+        ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, _currentSelection),
           style: ElevatedButton.styleFrom(
