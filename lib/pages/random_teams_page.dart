@@ -1,10 +1,10 @@
 // ============== pages/random_teams_page.dart ==============
+import 'package:family_cards/widgets/teams/team_display_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/player.dart';
 import '../models/team_generation_result.dart';
 import '../providers/providers.dart';
-import '../widgets/teams/match_display.dart';
 import '../widgets/teams/resting_players_card.dart';
 
 class RandomTeamsPage extends ConsumerStatefulWidget {
@@ -276,20 +276,64 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // First match
-          MatchDisplay(
-            team1: _result!.teams[0],
-            team2: _result!.teams[1],
-            title: _result!.teams.length == 4 ? 'المباراة الأولى' : null,
+          // First match (blue theme)
+          Row(
+            children: [
+              Expanded(
+                child: TeamDisplayCard(team: _result!.teams[0], color: Colors.blue.shade700),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.red, width: 2),
+                  ),
+                  child: const Text(
+                    'VS',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.red),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: TeamDisplayCard(team: _result!.teams[1], color: Colors.blue.shade700),
+              ),
+            ],
           ),
 
-          // Second match if exists
+          // Second match if exists (green theme)
           if (_result!.teams.length == 4) ...[
             const SizedBox(height: 24),
-            MatchDisplay(
-              team1: _result!.teams[2],
-              team2: _result!.teams[3],
-              title: 'المباراة الثانية',
+            Row(
+              children: [
+                Expanded(
+                  child: TeamDisplayCard(team: _result!.teams[2], color: Colors.green.shade700),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.red, width: 2),
+                    ),
+                    child: const Text(
+                      'VS',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: TeamDisplayCard(team: _result!.teams[3], color: Colors.green.shade700),
+                ),
+              ],
             ),
           ],
 
