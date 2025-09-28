@@ -214,22 +214,6 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
               ),
             ),
           ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: SizedBox(
-              width: double.infinity,
-              child: TextButton.icon(
-                icon: const Icon(Icons.refresh),
-                label: const Text('إعادة تعيين دورة الاستراحة'),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.orange,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                onPressed: _resetCycle,
-              ),
-            ),
-          ),
           const SizedBox(height: 16),
 
           Expanded(child: _buildResultsView()),
@@ -340,7 +324,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
           // Resting players
           if (_result!.restingPlayers.isNotEmpty) ...[
             const SizedBox(height: 30),
-            RestingPlayersCard(players: _result!.restingPlayers),
+            RestingPlayersCard(players: _result!.restingPlayers, onResetCycle: _resetCycle),
           ],
         ],
       ),
