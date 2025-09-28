@@ -12,10 +12,10 @@ class TeamDisplayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 4,
-      color: color.withValues(alpha: 0.1),
+      elevation: 2,
+      color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: color, width: 2),
       ),
       child: Padding(
@@ -35,7 +35,11 @@ class TeamDisplayCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Text(
                   player.name,
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade800,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),

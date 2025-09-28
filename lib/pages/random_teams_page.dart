@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/player.dart';
 import '../models/team_generation_result.dart';
 import '../providers/providers.dart';
-import '../widgets/common/app_button.dart';
 import '../widgets/teams/match_display.dart';
 import '../widgets/teams/resting_players_card.dart';
 
@@ -34,29 +33,40 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
 
     final players = ref.read(playersProvider).value ?? [];
     final selectedIds = ref.read(selectedPlayersProvider).value ?? {};
-    final restedIds = ref.read(restedPlayersProvider).value ?? {};
+    final currentRestedIds = ref.read(restedPlayersProvider).value ?? {};
     final teamGenerator = ref.read(teamGeneratorServiceProvider);
+    final storage = ref.read(storageServiceProvider);
 
     // Check if selection changed and reset cycle if needed
-    final storage = ref.read(storageServiceProvider);
     final lastSelected = await storage.getLastSelectedPlayerIdsCheck();
+    Set<String> activeRestedIds = currentRestedIds;
 
     if (!_setsEqual(lastSelected, selectedIds)) {
-      await storage.saveRestedPlayerIds({});
+      activeRestedIds = {};
+      await ref.read(restedPlayersProvider.notifier).updateRested(activeRestedIds);
       await storage.saveLastSelectedPlayerIdsCheck(selectedIds);
-      await ref.read(restedPlayersProvider.notifier).loadRestedPlayers();
     }
 
     final result = teamGenerator.generateTeams(
       allPlayers: players,
       selectedPlayerIds: selectedIds,
-      restedPlayerIds: ref.read(restedPlayersProvider).value ?? {},
+      restedPlayerIds: activeRestedIds,
     );
 
     if (result.isSuccess) {
-      // Update rested players
-      final newRestedIds = Set<String>.from(restedIds)
-        ..addAll(result.restingPlayers.map((p) => p.id));
+      // Check if we need to reset cycle (everyone has rested)
+      final notRestedYet = selectedIds.where((id) => !activeRestedIds.contains(id)).toSet();
+
+      Set<String> newRestedIds;
+      if (notRestedYet.isEmpty) {
+        // New cycle - only the current resting players are marked as rested
+        newRestedIds = result.restingPlayers.map((p) => p.id).toSet();
+      } else {
+        // Continue current cycle - add new resting players to existing
+        newRestedIds = Set<String>.from(activeRestedIds)
+          ..addAll(result.restingPlayers.map((p) => p.id));
+      }
+
       await ref.read(restedPlayersProvider.notifier).updateRested(newRestedIds);
     }
 
@@ -77,6 +87,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
 
     final result = await showDialog<Set<String>>(
       context: context,
+      barrierDismissible: false, // Add this line
       builder:
           (context) => _PlayerSelectionDialog(
             players: players,
@@ -88,7 +99,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
     if (result != null) {
       await ref.read(selectedPlayersProvider.notifier).updateSelection(result);
       setState(() {
-        _result = null; // Clear previous results when selection changes
+        _result = null;
       });
     }
   }
@@ -109,24 +120,51 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: AppButton(
-              icon: Icons.check_box,
-              label: 'اختيار اللاعبين المشاركين ($selectedCount مختار)',
-              color: Colors.indigo,
-              onPressed: _showPlayerSelectionDialog,
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.check_box),
+                label: Text(
+                  'اختيار اللاعبين المشاركين ($selectedCount مختار)',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey.shade700,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: _showPlayerSelectionDialog,
+              ),
             ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: AppButton(
-              icon: Icons.shuffle,
-              label:
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon:
+                    _isGenerating
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                        : const Icon(Icons.shuffle),
+                label: Text(
                   selectedCount >= 8
                       ? 'تكوين 4 فرق عشوائية (8 لاعبين)'
                       : 'تكوين 2 فريق عشوائي (4 لاعبين)',
-              color: Colors.teal,
-              onPressed: canGenerate && !_isGenerating ? _generateTeams : null,
-              isLoading: _isGenerating,
+                  style: const TextStyle(fontSize: 16),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: canGenerate ? Colors.grey.shade800 : Colors.grey.shade400,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: canGenerate && !_isGenerating ? _generateTeams : null,
+              ),
             ),
           ),
           const SizedBox(height: 16),
