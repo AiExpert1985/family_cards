@@ -90,7 +90,8 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
 
     if (!mounted) return;
 
-    final result = await showDialog<Set<String>>(
+    final result = await showDialog<Set<String>?>(
+      // Note the ?
       context: context,
       barrierDismissible: false,
       builder:
@@ -98,10 +99,12 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
             players: players,
             initialSelection: currentSelection,
             restedIds: restedIds,
+            onResetCycle: _resetCycle,
           ),
     );
 
     if (result != null) {
+      // This will handle both cases
       await ref.read(selectedPlayersProvider.notifier).updateSelection(result);
       setState(() {
         _result = null;
@@ -324,7 +327,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
           // Resting players
           if (_result!.restingPlayers.isNotEmpty) ...[
             const SizedBox(height: 30),
-            RestingPlayersCard(players: _result!.restingPlayers, onResetCycle: _resetCycle),
+            RestingPlayersCard(players: _result!.restingPlayers),
           ],
         ],
       ),
@@ -337,11 +340,13 @@ class _PlayerSelectionDialog extends StatefulWidget {
   final List<Player> players;
   final Set<String> initialSelection;
   final Set<String> restedIds;
+  final Future<void> Function()? onResetCycle;
 
   const _PlayerSelectionDialog({
     required this.players,
     required this.initialSelection,
     required this.restedIds,
+    this.onResetCycle, // Add this
   });
 
   @override
@@ -427,6 +432,18 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
             });
           },
           child: const Text('تحديد الكل'),
+        ),
+        TextButton(
+          onPressed: () async {
+            if (widget.onResetCycle != null) {
+              await widget.onResetCycle!();
+              if (context.mounted) {
+                Navigator.pop(context); // Don't pass _currentSelection
+              }
+            }
+          },
+          style: TextButton.styleFrom(foregroundColor: Colors.orange),
+          child: const Text('إعادة تعيين الدورة'),
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, _currentSelection),
