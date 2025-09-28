@@ -5,13 +5,16 @@ import '../models/player.dart';
 import '../models/game.dart';
 
 class StorageService {
-  static const String playersKey = 'players';
-  static const String gamesKey = 'games';
-  static const String selectedPlayersKey = 'selectedPlayers'; // NEW KEY
+  static const String _playersKey = 'players';
+  static const String _gamesKey = 'games';
+  static const String _selectedPlayersKey = 'selectedPlayers';
+  static const String _restedPlayersKey = 'restedPlayers';
+  static const String _lastSelectedKey = 'lastSelectedPlayersCheck';
 
+  // Players
   Future<List<Player>> getPlayers() async {
     final prefs = await SharedPreferences.getInstance();
-    final String? data = prefs.getString(playersKey);
+    final String? data = prefs.getString(_playersKey);
     if (data == null || data.isEmpty) return [];
     try {
       final List decoded = jsonDecode(data);
@@ -21,14 +24,20 @@ class StorageService {
     }
   }
 
-  Future<void> savePlayers(List<Player> players) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(playersKey, jsonEncode(players.map((e) => e.toJson()).toList()));
+  Future<bool> savePlayers(List<Player> players) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_playersKey, jsonEncode(players.map((e) => e.toJson()).toList()));
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
+  // Games
   Future<List<Game>> getGames() async {
     final prefs = await SharedPreferences.getInstance();
-    final String? data = prefs.getString(gamesKey);
+    final String? data = prefs.getString(_gamesKey);
     if (data == null || data.isEmpty) return [];
     try {
       final List decoded = jsonDecode(data);
@@ -38,21 +47,75 @@ class StorageService {
     }
   }
 
-  Future<void> saveGames(List<Game> games) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(gamesKey, jsonEncode(games.map((e) => e.toJson()).toList()));
+  Future<bool> saveGames(List<Game> games) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_gamesKey, jsonEncode(games.map((e) => e.toJson()).toList()));
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
-  // NEW METHODS for selected players persistence
+  // Selected Players
   Future<Set<String>> getSelectedPlayerIds() async {
     final prefs = await SharedPreferences.getInstance();
-    // SharedPreferences.getStringList returns List<String>?, so we use it directly.
-    final List<String>? data = prefs.getStringList(selectedPlayersKey); 
+    final List<String>? data = prefs.getStringList(_selectedPlayersKey);
     return data?.toSet() ?? {};
   }
 
-  Future<void> saveSelectedPlayerIds(Set<String> playerIds) async {
+  Future<bool> saveSelectedPlayerIds(Set<String> playerIds) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_selectedPlayersKey, playerIds.toList());
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Rested Players (Cycle State)
+  Future<Set<String>> getRestedPlayerIds() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(selectedPlayersKey, playerIds.toList());
+    final List<String>? data = prefs.getStringList(_restedPlayersKey);
+    return data?.toSet() ?? {};
+  }
+
+  Future<bool> saveRestedPlayerIds(Set<String> playerIds) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_restedPlayersKey, playerIds.toList());
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Last Selected Check
+  Future<Set<String>> getLastSelectedPlayerIdsCheck() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String>? data = prefs.getStringList(_lastSelectedKey);
+    return data?.toSet() ?? {};
+  }
+
+  Future<bool> saveLastSelectedPlayerIdsCheck(Set<String> playerIds) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_lastSelectedKey, playerIds.toList());
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Clear all data
+  Future<bool> clearAllData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 }

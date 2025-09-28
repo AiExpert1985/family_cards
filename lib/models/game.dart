@@ -8,7 +8,7 @@ class Game {
   final String team2Player2;
   final int winningTeam;
 
-  Game({
+  const Game({
     required this.id,
     required this.date,
     required this.team1Player1,

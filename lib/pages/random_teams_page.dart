@@ -1,172 +1,104 @@
 // ============== pages/random_teams_page.dart ==============
 import 'package:flutter/material.dart';
-import 'dart:math';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/player.dart';
-import '../services/storage_service.dart';
+import '../models/team_generation_result.dart';
+import '../providers/providers.dart';
+import '../widgets/common/app_button.dart';
+import '../widgets/teams/match_display.dart';
+import '../widgets/teams/resting_players_card.dart';
 
-class RandomTeamsPage extends StatefulWidget {
+class RandomTeamsPage extends ConsumerStatefulWidget {
   const RandomTeamsPage({super.key});
 
   @override
-  State<RandomTeamsPage> createState() => _RandomTeamsPageState();
+  ConsumerState<RandomTeamsPage> createState() => _RandomTeamsPageState();
 }
 
-class _RandomTeamsPageState extends State<RandomTeamsPage> {
-  final storage = StorageService();
-  List<Player> allPlayers = [];
-  Set<String> selectedPlayerIds = {};
-  List<List<Player>> teams = [];
-  List<Player> playersInRest = []; // List for resting players
-  String resultMessage = '';
+class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
+  TeamGenerationResult? _result;
+  bool _isGenerating = false;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
-  }
-
-  Future<void> _loadData() async {
-    allPlayers = await storage.getPlayers();
-    selectedPlayerIds = await storage.getSelectedPlayerIds();
-    setState(() {});
-  }
-
-  void _updateSelectedPlayerIds(Set<String> newSelectedIds) {
-    setState(() {
-      selectedPlayerIds = newSelectedIds;
-      teams = [];
-      playersInRest = [];
-      resultMessage = '';
+    // Load initial data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(selectedPlayersProvider.notifier).loadSelectedPlayers();
+      ref.read(restedPlayersProvider.notifier).loadRestedPlayers();
     });
-    storage.saveSelectedPlayerIds(selectedPlayerIds);
+  }
+
+  Future<void> _generateTeams() async {
+    setState(() => _isGenerating = true);
+
+    final players = ref.read(playersProvider).value ?? [];
+    final selectedIds = ref.read(selectedPlayersProvider).value ?? {};
+    final restedIds = ref.read(restedPlayersProvider).value ?? {};
+    final teamGenerator = ref.read(teamGeneratorServiceProvider);
+
+    // Check if selection changed and reset cycle if needed
+    final storage = ref.read(storageServiceProvider);
+    final lastSelected = await storage.getLastSelectedPlayerIdsCheck();
+
+    if (!_setsEqual(lastSelected, selectedIds)) {
+      await storage.saveRestedPlayerIds({});
+      await storage.saveLastSelectedPlayerIdsCheck(selectedIds);
+      await ref.read(restedPlayersProvider.notifier).loadRestedPlayers();
+    }
+
+    final result = teamGenerator.generateTeams(
+      allPlayers: players,
+      selectedPlayerIds: selectedIds,
+      restedPlayerIds: ref.read(restedPlayersProvider).value ?? {},
+    );
+
+    if (result.isSuccess) {
+      // Update rested players
+      final newRestedIds = Set<String>.from(restedIds)
+        ..addAll(result.restingPlayers.map((p) => p.id));
+      await ref.read(restedPlayersProvider.notifier).updateRested(newRestedIds);
+    }
+
+    setState(() {
+      _result = result;
+      _isGenerating = false;
+    });
+  }
+
+  bool _setsEqual(Set<String> a, Set<String> b) {
+    return a.length == b.length && a.containsAll(b);
   }
 
   Future<void> _showPlayerSelectionDialog() async {
-    final updatedIds = await showDialog<Set<String>>(
+    final players = ref.read(playersProvider).value ?? [];
+    final currentSelection = ref.read(selectedPlayersProvider).value ?? {};
+    final restedIds = ref.read(restedPlayersProvider).value ?? {};
+
+    final result = await showDialog<Set<String>>(
       context: context,
-      builder: (context) => _PlayerSelectionDialog(
-        allPlayers: allPlayers,
-        initialSelectedIds: selectedPlayerIds,
-      ),
+      builder:
+          (context) => _PlayerSelectionDialog(
+            players: players,
+            initialSelection: currentSelection,
+            restedIds: restedIds,
+          ),
     );
 
-    if (updatedIds != null) {
-      _updateSelectedPlayerIds(updatedIds);
-    }
-  }
-
-  Future<void> _generateRandomTeams() async {
-    final List<Player> selectedPlayers = allPlayers
-        .where((p) => selectedPlayerIds.contains(p.id))
-        .toList();
-
-    if (selectedPlayers.length < 4) {
+    if (result != null) {
+      await ref.read(selectedPlayersProvider.notifier).updateSelection(result);
       setState(() {
-        teams = [];
-        playersInRest = [];
-        resultMessage = 'يجب اختيار 4 لاعبين على الأقل لتكوين فرق.';
+        _result = null; // Clear previous results when selection changes
       });
-      return;
     }
-
-    final requiredPlayers = selectedPlayers.length >= 8 ? 8 : 4;
-    final int numTeams = requiredPlayers ~/ 2; 
-
-    // --- 1. Cycle Check and Reset ---
-    // A player MUST play if they have needsToPlay = true.
-    final playersWhoNeedToPlay = selectedPlayers.where((p) => p.needsToPlay).toList();
-    
-    // Check: If the count of players needing to play equals the total selected, 
-    // it means everyone has rested once, so we reset the cycle.
-    if (playersWhoNeedToPlay.length == selectedPlayers.length) {
-      // Full cycle complete! Reset all needsToPlay flags for the selected group.
-      allPlayers = allPlayers.map((p) {
-        if (selectedPlayerIds.contains(p.id)) {
-          return p.copyWith(needsToPlay: false); 
-        }
-        return p;
-      }).toList();
-    }
-    
-    // Refresh player lists based on the potentially reset allPlayers list
-    final List<Player> reloadedSelectedPlayers = allPlayers
-        .where((p) => selectedPlayerIds.contains(p.id))
-        .toList();
-
-    final List<Player> mustPlayPlayers = reloadedSelectedPlayers.where((p) => p.needsToPlay).toList();
-    final List<Player> canRestPlayers = reloadedSelectedPlayers.where((p) => !p.needsToPlay).toList();
-
-    // --- 2. Selection Logic ---
-    List<Player> chosenPlayers = [];
-
-    // Prioritize players who MUST play first
-    chosenPlayers.addAll(mustPlayPlayers);
-
-    // Filter out chosen players from the canRest list for randomization
-    final List<Player> availableToRest = canRestPlayers
-        .where((p) => !chosenPlayers.contains(p))
-        .toList();
-
-    // Fill the rest randomly from players who CAN rest
-    final int remainingNeeded = requiredPlayers - chosenPlayers.length;
-    if (remainingNeeded > 0) {
-      availableToRest.shuffle();
-      final playersToAdd = availableToRest.sublist(0, min(remainingNeeded, availableToRest.length));
-      chosenPlayers.addAll(playersToAdd);
-    }
-    
-    if (chosenPlayers.length < requiredPlayers) {
-      setState(() {
-        teams = [];
-        playersInRest = [];
-        resultMessage = 'عدد اللاعبين المختارين غير كافٍ لتكوين الفرق المطلوبة.';
-      });
-      return;
-    }
-
-    chosenPlayers.shuffle();
-
-    // --- 3. Team Assignment ---
-    final List<List<Player>> newTeams = List.generate(numTeams, (_) => []);
-    for (int i = 0; i < chosenPlayers.length; i++) {
-      newTeams[i % numTeams].add(chosenPlayers[i]);
-    }
-    teams = newTeams;
-
-    // --- 4. Update 'needsToPlay' Status and Persistence ---
-    final chosenIds = chosenPlayers.map((p) => p.id).toSet();
-    
-    // Identify resting players for display
-    playersInRest = reloadedSelectedPlayers.where((p) => !chosenIds.contains(p.id)).toList();
-
-    // Update needsToPlay status for the NEXT round
-    allPlayers = allPlayers.map((p) {
-      if (selectedPlayerIds.contains(p.id)) {
-        if (chosenIds.contains(p.id)) {
-          // If playing, reset needsToPlay to false (neutral for next selection)
-          return p.copyWith(needsToPlay: false);
-        } else {
-          // If resting, set needsToPlay to true (must play next)
-          return p.copyWith(needsToPlay: true);
-        }
-      }
-      return p;
-    }).toList();
-    
-    // Save updated players list
-    await storage.savePlayers(allPlayers);
-    
-    // --- 5. Final UI Update ---
-    setState(() {
-      resultMessage = ''; 
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final available = allPlayers.where((p) => selectedPlayerIds.contains(p.id)).length;
-    final canGenerate = available >= 4;
-    
+    final selectedAsync = ref.watch(selectedPlayersProvider);
+    final selectedCount = selectedAsync.value?.length ?? 0;
+    final canGenerate = selectedCount >= 4;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('تكوين فرق عشوائية'),
@@ -175,143 +107,132 @@ class _RandomTeamsPageState extends State<RandomTeamsPage> {
       ),
       body: Column(
         children: [
-          // Player Selection Button
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _showPlayerSelectionDialog,
-                icon: const Icon(Icons.check_box),
-                label: Text(
-                  'اختيار اللاعبين المشاركين ($available مختار)',
-                  style: const TextStyle(fontSize: 18),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                ),
-              ),
+            child: AppButton(
+              icon: Icons.check_box,
+              label: 'اختيار اللاعبين المشاركين ($selectedCount مختار)',
+              color: Colors.indigo,
+              onPressed: _showPlayerSelectionDialog,
             ),
           ),
-
-          // Generate Teams Button
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: canGenerate ? _generateRandomTeams : null,
-                icon: const Icon(Icons.shuffle),
-                label: Text(
-                  available >= 8
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: AppButton(
+              icon: Icons.shuffle,
+              label:
+                  selectedCount >= 8
                       ? 'تكوين 4 فرق عشوائية (8 لاعبين)'
                       : 'تكوين 2 فريق عشوائي (4 لاعبين)',
-                  style: const TextStyle(fontSize: 18),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.grey,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                ),
-              ),
+              color: Colors.teal,
+              onPressed: canGenerate && !_isGenerating ? _generateTeams : null,
+              isLoading: _isGenerating,
             ),
           ),
-          
-          // Results Display
-          Expanded(
-            child: teams.isEmpty && resultMessage.isEmpty
-                ? const Center(child: Text('قم باختيار اللاعبين وتكوين الفرق', style: TextStyle(fontSize: 16, color: Colors.grey)))
-                : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (resultMessage.isNotEmpty) 
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: Text(
-                            resultMessage,
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-
-                      // Display Matches (Team 1 vs Team 2, Team 3 vs Team 4)
-                      if (teams.isNotEmpty) ..._buildMatches(),
-                      
-                      const SizedBox(height: 30),
-                      
-                      // Display Resting Players
-                      if (playersInRest.isNotEmpty) 
-                        _RestingPlayersList(players: playersInRest),
-                    ],
-                  ),
-                ),
-          ),
+          const SizedBox(height: 16),
+          Expanded(child: _buildResultsView()),
         ],
       ),
     );
   }
 
-  List<Widget> _buildMatches() {
-    List<Widget> matchWidgets = [];
-    
-    // Match 1: Team 1 vs Team 2
-    matchWidgets.add(_MatchRow(
-      team1: teams[0], 
-      team2: teams[1], 
-      matchNumber: 1, 
-      totalTeams: teams.length, 
-    ));
-    
-    // Match 2: Team 3 vs Team 4 (if available)
-    if (teams.length == 4) {
-      matchWidgets.add(const SizedBox(height: 24));
-      matchWidgets.add(_MatchRow(
-        team1: teams[2], 
-        team2: teams[3], 
-        matchNumber: 2, 
-        totalTeams: teams.length, 
-      ));
+  Widget _buildResultsView() {
+    if (_result == null) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.0),
+          child: Text(
+            'قم باختيار اللاعبين وتكوين الفرق',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
     }
-    
-    return matchWidgets;
+
+    if (_result!.hasError) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.warning, size: 64, color: Colors.orange),
+              const SizedBox(height: 16),
+              Text(
+                _result!.errorMessage!,
+                style: const TextStyle(fontSize: 16, color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // First match
+          MatchDisplay(
+            team1: _result!.teams[0],
+            team2: _result!.teams[1],
+            title: _result!.teams.length == 4 ? 'المباراة الأولى' : null,
+          ),
+
+          // Second match if exists
+          if (_result!.teams.length == 4) ...[
+            const SizedBox(height: 24),
+            MatchDisplay(
+              team1: _result!.teams[2],
+              team2: _result!.teams[3],
+              title: 'المباراة الثانية',
+            ),
+          ],
+
+          // Resting players
+          if (_result!.restingPlayers.isNotEmpty) ...[
+            const SizedBox(height: 30),
+            RestingPlayersCard(players: _result!.restingPlayers),
+          ],
+        ],
+      ),
+    );
   }
 }
 
-// --- WIDGET: Player Selection Dialog ---
-
+// ============== Player Selection Dialog ==============
 class _PlayerSelectionDialog extends StatefulWidget {
-  final List<Player> allPlayers;
-  final Set<String> initialSelectedIds;
+  final List<Player> players;
+  final Set<String> initialSelection;
+  final Set<String> restedIds;
 
   const _PlayerSelectionDialog({
-    required this.allPlayers,
-    required this.initialSelectedIds,
+    required this.players,
+    required this.initialSelection,
+    required this.restedIds,
   });
 
   @override
-  State<_PlayerSelectionDialog> createState() => __PlayerSelectionDialogState();
+  State<_PlayerSelectionDialog> createState() => _PlayerSelectionDialogState();
 }
 
-class __PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
-  late Set<String> currentSelectedIds;
+class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
+  late Set<String> _currentSelection;
 
   @override
   void initState() {
     super.initState();
-    currentSelectedIds = Set.from(widget.initialSelectedIds);
+    _currentSelection = Set.from(widget.initialSelection);
   }
 
-  void _togglePlayerSelection(String playerId) {
+  void _togglePlayer(String playerId) {
     setState(() {
-      if (currentSelectedIds.contains(playerId)) {
-        currentSelectedIds.remove(playerId);
+      if (_currentSelection.contains(playerId)) {
+        _currentSelection.remove(playerId);
       } else {
-        currentSelectedIds.add(playerId);
+        _currentSelection.add(playerId);
       }
     });
   }
@@ -320,167 +241,51 @@ class __PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('اختيار اللاعبين', textAlign: TextAlign.right),
-      contentPadding: const EdgeInsets.only(top: 10),
+      contentPadding: const EdgeInsets.only(top: 20),
       content: SizedBox(
         width: double.maxFinite,
-        child: ListView.builder(
-          shrinkWrap: true,
-          itemCount: widget.allPlayers.length,
-          itemBuilder: (context, index) {
-            final player = widget.allPlayers[index];
-            final isSelected = currentSelectedIds.contains(player.id);
-            return ListTile(
-              title: Text(player.name, textAlign: TextAlign.right),
-              trailing: player.needsToPlay
-                  ? const Icon(Icons.star, color: Colors.amber, size: 20)
-                  : null,
-              leading: Checkbox(
-                value: isSelected,
-                onChanged: (_) => _togglePlayerSelection(player.id),
-              ),
-              onTap: () => _togglePlayerSelection(player.id),
-            );
-          },
-        ),
+        child:
+            widget.players.isEmpty
+                ? const Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Text(
+                    'لا يوجد لاعبين\nقم بإضافة لاعبين أولاً',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
+                : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: widget.players.length,
+                  itemBuilder: (context, index) {
+                    final player = widget.players[index];
+                    final isSelected = _currentSelection.contains(player.id);
+                    final hasRested = widget.restedIds.contains(player.id) && isSelected;
+
+                    return ListTile(
+                      title: Text(player.name, textAlign: TextAlign.right),
+                      trailing:
+                          hasRested
+                              ? const Icon(Icons.check_circle, color: Colors.green, size: 20)
+                              : null,
+                      leading: Checkbox(
+                        value: isSelected,
+                        onChanged: (_) => _togglePlayer(player.id),
+                      ),
+                      onTap: () => _togglePlayer(player.id),
+                    );
+                  },
+                ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('إلغاء'),
-        ),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
         ElevatedButton(
-          onPressed: () => Navigator.pop(context, currentSelectedIds),
+          onPressed: () => Navigator.pop(context, _currentSelection),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.teal,
+            foregroundColor: Colors.white,
+          ),
           child: const Text('حفظ الاختيار'),
-        ),
-      ],
-    );
-  }
-}
-
-// --- WIDGET: Team Display ---
-
-class _TeamDisplay extends StatelessWidget {
-  final List<Player> team;
-  final Color color;
-
-  const _TeamDisplay({required this.team, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          team.first.name,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          team.last.name,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-}
-
-// --- WIDGET: Match Row ---
-
-class _MatchRow extends StatelessWidget {
-  final List<Player> team1;
-  final List<Player> team2;
-  final int matchNumber;
-  final int totalTeams;
-
-  const _MatchRow({
-    required this.team1, 
-    required this.team2, 
-    required this.matchNumber,
-    required this.totalTeams,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        if (matchNumber == 1 && totalTeams == 4)
-          const Text('المباراة الأولى', style: TextStyle(fontSize: 16, color: Colors.grey)),
-        if (matchNumber == 2) 
-          const Text('المباراة الثانية', style: TextStyle(fontSize: 16, color: Colors.grey)),
-        if (matchNumber > 1)
-          const SizedBox(height: 8),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Expanded(
-              child: _TeamDisplay(team: team1, color: Colors.blue.shade700),
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                'X',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.red),
-              ),
-            ),
-            Expanded(
-              child: _TeamDisplay(team: team2, color: Colors.red.shade700),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-// --- WIDGET: Resting Players List ---
-
-class _RestingPlayersList extends StatelessWidget {
-  final List<Player> players;
-
-  const _RestingPlayersList({required this.players});
-
-  @override
-  Widget build(BuildContext context) {
-    if (players.isEmpty) return const SizedBox.shrink(); 
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        const Text(
-          'اللاعبون تحت الراحة:',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange),
-          textAlign: TextAlign.right,
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.orange.shade50,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.orange.shade200),
-          ),
-          width: double.infinity,
-          child: Wrap(
-            alignment: WrapAlignment.end,
-            spacing: 8.0,
-            runSpacing: 4.0,
-            children: players.map((p) => Chip(
-              label: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-              backgroundColor: Colors.white,
-              avatar: const Icon(Icons.bed, color: Colors.orange),
-            )).toList(),
-          ),
         ),
       ],
     );

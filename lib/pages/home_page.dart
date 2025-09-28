@@ -1,5 +1,6 @@
 // ============== pages/home_page.dart ==============
 import 'package:flutter/material.dart';
+import '../widgets/common/app_button.dart';
 import 'players_page.dart';
 import 'new_game_page.dart';
 import 'games_history_page.dart';
@@ -25,66 +26,45 @@ class HomePage extends StatelessWidget {
             colors: [Colors.indigo.shade50, Colors.white],
           ),
         ),
-        child: Center(
+        child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _MenuButton(
+                AppButton(
                   icon: Icons.people,
                   label: 'إدارة اللاعبين',
                   color: Colors.blue,
-                  onPressed:
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const PlayersPage()),
-                      ),
+                  onPressed: () => _navigate(context, const PlayersPage()),
                 ),
                 const SizedBox(height: 20),
-                _MenuButton(
+                AppButton(
+                  icon: Icons.shuffle,
+                  label: 'تكوين فرق عشوائية',
+                  color: Colors.teal,
+                  onPressed: () => _navigate(context, const RandomTeamsPage()),
+                ),
+                const SizedBox(height: 20),
+                AppButton(
                   icon: Icons.add_circle,
                   label: 'لعبة جديدة',
                   color: Colors.green,
-                  onPressed:
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const NewGamePage()),
-                      ),
+                  onPressed: () => _navigate(context, const NewGamePage()),
                 ),
                 const SizedBox(height: 20),
-                _MenuButton(
+                AppButton(
                   icon: Icons.history,
                   label: 'سجل المباريات',
                   color: Colors.orange,
-                  onPressed:
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const GamesHistoryPage()),
-                      ),
+                  onPressed: () => _navigate(context, const GamesHistoryPage()),
                 ),
                 const SizedBox(height: 20),
-                _MenuButton(
+                AppButton(
                   icon: Icons.bar_chart,
                   label: 'الإحصائيات',
                   color: Colors.purple,
-                  onPressed:
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const StatisticsPage()),
-                      ),
-                ),
-                               const SizedBox(height: 20),
-                // NEW BUTTON
-                _MenuButton(
-                  icon: Icons.shuffle,
-                  label: 'تكوين فرق عشوائية', // Random Teams
-                  color: Colors.teal,
-                  onPressed:
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const RandomTeamsPage()),
-                      ),
+                  onPressed: () => _navigate(context, const StatisticsPage()),
                 ),
               ],
             ),
@@ -93,36 +73,8 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
-}
 
-class _MenuButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onPressed;
-
-  const _MenuButton({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 28),
-        label: Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-      ),
-    );
+  void _navigate(BuildContext context, Widget page) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 }
