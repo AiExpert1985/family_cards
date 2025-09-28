@@ -416,42 +416,108 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                 ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
-        TextButton(
-          onPressed: () {
-            setState(() {
-              _currentSelection.clear();
-            });
-          },
-          child: const Text('إلغاء تحديد الكل'),
-        ),
-        TextButton(
-          onPressed: () {
-            setState(() {
-              _currentSelection.addAll(widget.players.map((p) => p.id));
-            });
-          },
-          child: const Text('تحديد الكل'),
-        ),
-        TextButton(
-          onPressed: () async {
-            if (widget.onResetCycle != null) {
-              await widget.onResetCycle!();
-              if (context.mounted) {
-                Navigator.pop(context); // Don't pass _currentSelection
-              }
-            }
-          },
-          style: TextButton.styleFrom(foregroundColor: Colors.orange),
-          child: const Text('إعادة تعيين الدورة'),
-        ),
-        ElevatedButton(
-          onPressed: () => Navigator.pop(context, _currentSelection),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.teal,
-            foregroundColor: Colors.white,
+        Container(
+          width: double.maxFinite,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Action buttons row
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _currentSelection.clear();
+                        });
+                      },
+                      icon: const Icon(Icons.clear_all, size: 18),
+                      label: const Text('إلغاء تحديد الكل'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: BorderSide(color: Colors.red.shade300),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _currentSelection.addAll(widget.players.map((p) => p.id));
+                        });
+                      },
+                      icon: const Icon(Icons.select_all, size: 18),
+                      label: const Text('تحديد الكل'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.blue,
+                        side: BorderSide(color: Colors.blue.shade300),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Reset cycle button
+              if (widget.onResetCycle != null)
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      if (widget.onResetCycle != null) {
+                        await widget.onResetCycle!();
+                        if (context.mounted) {
+                          Navigator.pop(context, _currentSelection);
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text('تصفير الاستراحات'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.orange,
+                      side: BorderSide(color: Colors.orange.shade300),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              // Main action buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.grey.shade600,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text('إلغاء', style: TextStyle(fontSize: 16)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, _currentSelection),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text(
+                        'حفظ',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          child: const Text('حفظ الاختيار'),
         ),
       ],
     );
