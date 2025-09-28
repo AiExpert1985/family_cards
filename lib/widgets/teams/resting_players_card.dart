@@ -31,7 +31,7 @@ class RestingPlayersCard extends StatelessWidget {
                   TextButton.icon(
                     onPressed: onResetCycle,
                     icon: const Icon(Icons.refresh, size: 16),
-                    label: const Text('إعادة تعيين'),
+                    label: const Text('تصفير الاستراحات'),
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.orange,
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -46,16 +46,16 @@ class RestingPlayersCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade700,
+                        color: Colors.orange,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Icon(Icons.bed, color: Colors.grey.shade600),
+                    const Icon(Icons.bed, color: Colors.orange),
                   ],
                 ),
               ],
             ),
-            // Second row: Player names
+            // Second row: Player chips
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,
@@ -66,20 +66,13 @@ class RestingPlayersCard extends StatelessWidget {
                 children:
                     players
                         .map(
-                          (p) => Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.grey.shade400),
-                            ),
-                            child: Text(
+                          (p) => Chip(
+                            label: Text(
                               p.name,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey.shade700,
-                              ),
+                              style: const TextStyle(fontWeight: FontWeight.w600),
                             ),
+                            backgroundColor: Colors.orange.shade50,
+                            avatar: const Icon(Icons.person, color: Colors.orange, size: 18),
                           ),
                         )
                         .toList(),
