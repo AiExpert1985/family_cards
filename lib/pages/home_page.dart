@@ -4,6 +4,7 @@ import 'players_page.dart';
 import 'new_game_page.dart';
 import 'games_history_page.dart';
 import 'statistics_page.dart';
+import 'random_teams_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -12,7 +13,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('متتبع ألعاب الورق'),
+        title: const Text('لا احد يسولف بكيفه'),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
       ),
@@ -71,6 +72,18 @@ class HomePage extends StatelessWidget {
                       () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const StatisticsPage()),
+                      ),
+                ),
+                               const SizedBox(height: 20),
+                // NEW BUTTON
+                _MenuButton(
+                  icon: Icons.shuffle,
+                  label: 'تكوين فرق عشوائية', // Random Teams
+                  color: Colors.teal,
+                  onPressed:
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const RandomTeamsPage()),
                       ),
                 ),
               ],

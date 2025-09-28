@@ -52,7 +52,7 @@ class _NewGamePageState extends State<NewGamePage> {
     if (mounted) Navigator.pop(context);
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -60,100 +60,105 @@ class _NewGamePageState extends State<NewGamePage> {
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
       ),
-      body:
-          players.isEmpty
-              ? const Center(
-                child: Text(
-                  'قم بإضافة اللاعبين أولاً',
-                  style: TextStyle(fontSize: 18, color: Colors.grey),
-                ),
-              )
-              : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _TeamCard(
-                      title: 'الفريق الأول',
-                      color: Colors.blue,
-                      players: players,
-                      player1: t1p1,
-                      player2: t1p2,
-                      onPlayer1Changed: (v) => setState(() => t1p1 = v),
-                      onPlayer2Changed: (v) => setState(() => t1p2 = v),
-                    ),
-                    const SizedBox(height: 20),
-                    _TeamCard(
-                      title: 'الفريق الثاني',
-                      color: Colors.red,
-                      players: players,
-                      player1: t2p1,
-                      player2: t2p2,
-                      onPlayer1Changed: (v) => setState(() => t2p1 = v),
-                      onPlayer2Changed: (v) => setState(() => t2p2 = v),
-                    ),
-                    const SizedBox(height: 24),
-                    Card(
-                      elevation: 4,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            const Text(
-                              'الفريق الفائز',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: () => setState(() => winningTeam = 1),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          winningTeam == 1 ? Colors.blue : Colors.grey.shade300,
-                                      foregroundColor:
-                                          winningTeam == 1 ? Colors.white : Colors.black,
-                                      padding: const EdgeInsets.symmetric(vertical: 16),
+      body: players.isEmpty
+          ? const Center(
+              child: Text(
+                'قم بإضافة اللاعبين أولاً',
+                style: TextStyle(fontSize: 18, color: Colors.grey),
+              ),
+            )
+          : Center(
+              // Constrains the max width of the content on large screens
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _TeamCard(
+                        title: 'الفريق الأول',
+                        color: Colors.blue,
+                        players: players,
+                        player1: t1p1,
+                        player2: t1p2,
+                        onPlayer1Changed: (v) => setState(() => t1p1 = v),
+                        onPlayer2Changed: (v) => setState(() => t1p2 = v),
+                      ),
+                      const SizedBox(height: 20),
+                      _TeamCard(
+                        title: 'الفريق الثاني',
+                        color: Colors.red,
+                        players: players,
+                        player1: t2p1,
+                        player2: t2p2,
+                        onPlayer1Changed: (v) => setState(() => t2p1 = v),
+                        onPlayer2Changed: (v) => setState(() => t2p2 = v),
+                      ),
+                      const SizedBox(height: 24),
+                      Card(
+                        elevation: 4,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              const Text(
+                                'الفريق الفائز',
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () => setState(() => winningTeam = 1),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            winningTeam == 1 ? Colors.blue : Colors.grey.shade300,
+                                        foregroundColor:
+                                            winningTeam == 1 ? Colors.white : Colors.black,
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                      ),
+                                      child: const Text('الفريق الأول'),
                                     ),
-                                    child: const Text('الفريق الأول'),
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: () => setState(() => winningTeam = 2),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          winningTeam == 2 ? Colors.red : Colors.grey.shade300,
-                                      foregroundColor:
-                                          winningTeam == 2 ? Colors.white : Colors.black,
-                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () => setState(() => winningTeam = 2),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            winningTeam == 2 ? Colors.red : Colors.grey.shade300,
+                                        foregroundColor:
+                                            winningTeam == 2 ? Colors.white : Colors.black,
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                      ),
+                                      child: const Text('الفريق الثاني'),
                                     ),
-                                    child: const Text('الفريق الثاني'),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _saveGame,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _saveGame,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                          ),
+                          child: const Text('حفظ اللعبة', style: TextStyle(fontSize: 18)),
                         ),
-                        child: const Text('حفظ اللعبة', style: TextStyle(fontSize: 18)),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
+            ),
     );
   }
 }

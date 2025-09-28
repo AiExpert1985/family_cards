@@ -7,6 +7,7 @@ import '../models/game.dart';
 class StorageService {
   static const String playersKey = 'players';
   static const String gamesKey = 'games';
+  static const String selectedPlayersKey = 'selectedPlayers'; // NEW KEY
 
   Future<List<Player>> getPlayers() async {
     final prefs = await SharedPreferences.getInstance();
@@ -40,5 +41,18 @@ class StorageService {
   Future<void> saveGames(List<Game> games) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(gamesKey, jsonEncode(games.map((e) => e.toJson()).toList()));
+  }
+
+  // NEW METHODS for selected players persistence
+  Future<Set<String>> getSelectedPlayerIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    // SharedPreferences.getStringList returns List<String>?, so we use it directly.
+    final List<String>? data = prefs.getStringList(selectedPlayersKey); 
+    return data?.toSet() ?? {};
+  }
+
+  Future<void> saveSelectedPlayerIds(Set<String> playerIds) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(selectedPlayersKey, playerIds.toList());
   }
 }
