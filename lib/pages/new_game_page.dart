@@ -103,7 +103,7 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
                       onPlayer1Changed: (v) => setState(() => t2p1 = v),
                       onPlayer2Changed: (v) => setState(() => t2p2 = v),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     
                     // Konkan checkbox
                     Card(
@@ -112,7 +112,7 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
                         title: const Text(
                           'كونكان',
                           textAlign: TextAlign.right,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         value: isKonkan,
                         onChanged: (value) => setState(() => isKonkan = value ?? false),
@@ -120,7 +120,7 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
                       ),
                     ),
                     
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     
                     // Winner selection buttons - save directly
                     AppCard(
@@ -216,7 +216,7 @@ class _TeamCard extends StatelessWidget {
     return Card(
       elevation: 4,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           children: [
             Text(

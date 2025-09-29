@@ -50,7 +50,7 @@ class StatisticsPage extends ConsumerWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   subtitle: Text(
-                    'مباريات: ${stat.played} • انتصارات: ${stat.won} • خسائر: ${stat.lost}',
+                    'انتصارات: ${stat.won} • خسائر: ${stat.lost}',
                     textAlign: TextAlign.right,
                   ),
                   trailing: Container(
