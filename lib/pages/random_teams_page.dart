@@ -43,7 +43,9 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
 
     if (!_setsEqual(lastSelected, selectedIds)) {
       activeRestedIds = {};
-      await ref.read(restedPlayersProvider.notifier).updateRested(activeRestedIds);
+      await ref
+          .read(restedPlayersProvider.notifier)
+          .updateRested(activeRestedIds);
       await storage.saveLastSelectedPlayerIdsCheck(selectedIds);
     }
 
@@ -53,7 +55,8 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       restedPlayerIds: activeRestedIds,
     );
     if (result.isSuccess) {
-      final notRestedYet = selectedIds.where((id) => !activeRestedIds.contains(id)).toSet();
+      final notRestedYet =
+          selectedIds.where((id) => !activeRestedIds.contains(id)).toSet();
 
       Set<String> newRestedIds;
       if (notRestedYet.length < result.restingPlayers.length) {
@@ -182,7 +185,9 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
                   backgroundColor: Colors.grey.shade700,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 onPressed: _showPlayerSelectionDialog,
               ),
@@ -198,22 +203,24 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
                         ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                         : const Icon(Icons.shuffle),
-                label: Text(
-                  selectedCount >= 8
-                      ? 'تكوين 4 فرق عشوائية (8 لاعبين)'
-                      : 'تكوين 2 فريق عشوائي (4 لاعبين)',
-                  style: const TextStyle(fontSize: 16),
-                ),
+                label: Text("بدء القرعة", style: const TextStyle(fontSize: 16)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: canGenerate ? Colors.grey.shade800 : Colors.grey.shade400,
+                  backgroundColor:
+                      canGenerate ? Colors.grey.shade800 : Colors.grey.shade400,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                onPressed: canGenerate && !_isGenerating ? _generateTeams : null,
+                onPressed:
+                    canGenerate && !_isGenerating ? _generateTeams : null,
               ),
             ),
           ),
@@ -259,6 +266,20 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       );
     }
 
+    // Add this safety check
+    if (_result!.teams.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.0),
+          child: Text(
+            'لم يتم تكوين فرق',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -267,7 +288,10 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
           Row(
             children: [
               Expanded(
-                child: TeamDisplayCard(team: _result!.teams[0], color: Colors.blue.shade700),
+                child: TeamDisplayCard(
+                  team: _result!.teams[0],
+                  color: Colors.blue.shade700,
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -280,12 +304,19 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
                   ),
                   child: const Text(
                     'VS',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.red),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.red,
+                    ),
                   ),
                 ),
               ),
               Expanded(
-                child: TeamDisplayCard(team: _result!.teams[1], color: Colors.blue.shade700),
+                child: TeamDisplayCard(
+                  team: _result!.teams[1],
+                  color: Colors.blue.shade700,
+                ),
               ),
             ],
           ),
@@ -296,7 +327,10 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
             Row(
               children: [
                 Expanded(
-                  child: TeamDisplayCard(team: _result!.teams[2], color: Colors.green.shade700),
+                  child: TeamDisplayCard(
+                    team: _result!.teams[2],
+                    color: Colors.green.shade700,
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -318,7 +352,10 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
                   ),
                 ),
                 Expanded(
-                  child: TeamDisplayCard(team: _result!.teams[3], color: Colors.green.shade700),
+                  child: TeamDisplayCard(
+                    team: _result!.teams[3],
+                    color: Colors.green.shade700,
+                  ),
                 ),
               ],
             ),
@@ -404,7 +441,11 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                       title: Text(player.name, textAlign: TextAlign.right),
                       trailing:
                           hasRested
-                              ? const Icon(Icons.check_circle, color: Colors.green, size: 20)
+                              ? const Icon(
+                                Icons.check_circle,
+                                color: Colors.green,
+                                size: 20,
+                              )
                               : null,
                       leading: Checkbox(
                         value: isSelected,
@@ -446,7 +487,9 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                     child: OutlinedButton.icon(
                       onPressed: () {
                         setState(() {
-                          _currentSelection.addAll(widget.players.map((p) => p.id));
+                          _currentSelection.addAll(
+                            widget.players.map((p) => p.id),
+                          );
                         });
                       },
                       icon: const Icon(Icons.select_all, size: 18),
@@ -494,23 +537,32 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                         foregroundColor: Colors.grey.shade600,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text('إلغاء', style: TextStyle(fontSize: 16)),
+                      child: const Text(
+                        'إلغاء',
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     flex: 2,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context, _currentSelection),
+                      onPressed:
+                          () => Navigator.pop(context, _currentSelection),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.teal,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                       child: const Text(
                         'حفظ',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
