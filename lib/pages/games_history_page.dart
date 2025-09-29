@@ -150,7 +150,7 @@ class GamesHistoryPage extends ConsumerWidget {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
-                                      // Team 2 players
+                                      // Team 1 players (should be on the RIGHT in RTL)
                                       Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.end,
@@ -158,7 +158,7 @@ class GamesHistoryPage extends ConsumerWidget {
                                           Text(
                                             _getPlayerName(
                                               players,
-                                              game.team2Player1,
+                                              game.team1Player1,
                                             ),
                                             style: const TextStyle(
                                               fontSize: 15,
@@ -168,7 +168,7 @@ class GamesHistoryPage extends ConsumerWidget {
                                           Text(
                                             _getPlayerName(
                                               players,
-                                              game.team2Player2,
+                                              game.team1Player2,
                                             ),
                                             style: const TextStyle(
                                               fontSize: 15,
@@ -203,7 +203,7 @@ class GamesHistoryPage extends ConsumerWidget {
 
                                       const SizedBox(width: 12),
 
-                                      // Team 1 players
+                                      // Team 2 players (should be on the LEFT in RTL)
                                       Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.end,
@@ -211,7 +211,7 @@ class GamesHistoryPage extends ConsumerWidget {
                                           Text(
                                             _getPlayerName(
                                               players,
-                                              game.team1Player1,
+                                              game.team2Player1,
                                             ),
                                             style: const TextStyle(
                                               fontSize: 15,
@@ -221,7 +221,7 @@ class GamesHistoryPage extends ConsumerWidget {
                                           Text(
                                             _getPlayerName(
                                               players,
-                                              game.team1Player2,
+                                              game.team2Player2,
                                             ),
                                             style: const TextStyle(
                                               fontSize: 15,
