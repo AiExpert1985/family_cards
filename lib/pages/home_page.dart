@@ -1,21 +1,31 @@
 // ============== pages/home_page.dart ==============
-import 'package:family_cards/pages/sync_page.dart';
+import 'package:family_cards/pages/play_tab.dart';
+import 'package:family_cards/pages/records_tab.dart';
 import 'package:flutter/material.dart';
-import '../widgets/common/app_button.dart';
-import 'players_page.dart';
-import 'new_game_page.dart';
-import 'games_history_page.dart';
-import 'statistics_page.dart';
-import 'random_teams_page.dart';
+import 'settings_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _currentIndex = 0;
+
+  final _tabs = [
+    // Remove const since SettingsPage has onTap callbacks
+    const PlayTab(),
+    const RecordsTab(),
+    const SettingsPage(), // Add this third tab
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('هلا بالشريـــچ'),
+        title: Text(_getTitleForTab(_currentIndex)),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
       ),
@@ -27,108 +37,30 @@ class HomePage extends StatelessWidget {
             colors: [Colors.indigo.shade50, Colors.white],
           ),
         ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AppButton(
-                  icon: Icons.people,
-                  label: 'إدارة اللاعبين',
-                  color: Colors.blue,
-                  onPressed: () => _navigate(context, const PlayersPage()),
-                ),
-                const SizedBox(height: 20),
-                AppButton(
-                  icon: Icons.shuffle,
-                  label: 'تكوين فرق عشوائية',
-                  color: Colors.teal,
-                  onPressed: () => _navigate(context, const RandomTeamsPage()),
-                ),
-                const SizedBox(height: 20),
-                AppButton(
-                  icon: Icons.add_circle,
-                  label: 'لعبة جديدة',
-                  color: Colors.green,
-                  onPressed: () => _navigate(context, const NewGamePage()),
-                ),
-                const SizedBox(height: 20),
-                AppButton(
-                  icon: Icons.history,
-                  label: 'سجل المباريات',
-                  color: Colors.orange,
-                  onPressed: () => _navigate(context, const GamesHistoryPage()),
-                ),
-                const SizedBox(height: 20),
-                AppButton(
-                  icon: Icons.bar_chart,
-                  label: 'الإحصائيات',
-                  color: Colors.purple,
-                  onPressed: () => _navigate(context, const StatisticsPage()),
-                ),
-                const SizedBox(height: 20),
-                AppButton(
-                  icon: Icons.sync,
-                  label: 'مزامنة البيانات',
-                  color: Color(0xFF6B9AC4),
-                  onPressed: () => _navigate(context, const SyncPage()),
-                ),
-                const Spacer(),
-                Container(
-                  margin: const EdgeInsets.only(top: 16),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300, width: 1),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.phone, size: 14, color: Colors.grey.shade600),
-                          const SizedBox(width: 6),
-                          Text(
-                            '07701791983',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade700,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            'محمد النوفل',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade700,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'v1.0.0',
-                            style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        child: _tabs[_currentIndex],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.sports_esports), label: 'اللعب'),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'السجلات'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'الإعدادات'),
+        ],
       ),
     );
   }
 
-  void _navigate(BuildContext context, Widget page) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  String _getTitleForTab(int index) {
+    switch (index) {
+      case 0:
+        return 'اللعب';
+      case 1:
+        return 'السجلات';
+      case 2:
+        return 'الإعدادات';
+      default:
+        return 'اللعب';
+    }
   }
 }
