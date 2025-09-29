@@ -1,10 +1,10 @@
 // ============== pages/random_teams_page.dart ==============
-import 'package:family_cards/widgets/teams/team_display_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/player.dart';
 import '../models/team_generation_result.dart';
 import '../providers/providers.dart';
+import '../widgets/teams/team_display_card.dart';
 import '../widgets/teams/resting_players_card.dart';
 
 class RandomTeamsPage extends ConsumerStatefulWidget {
@@ -21,7 +21,6 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
   @override
   void initState() {
     super.initState();
-    // Load initial data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(selectedPlayersProvider.notifier).loadSelectedPlayers();
       ref.read(restedPlayersProvider.notifier).loadRestedPlayers();
@@ -37,7 +36,6 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
     final teamGenerator = ref.read(teamGeneratorServiceProvider);
     final storage = ref.read(storageServiceProvider);
 
-    // Check if selection changed and reset cycle if needed
     final lastSelected = await storage.getLastSelectedPlayerIdsCheck();
     Set<String> activeRestedIds = currentRestedIds;
 
@@ -54,17 +52,16 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       selectedPlayerIds: selectedIds,
       restedPlayerIds: activeRestedIds,
     );
+
     if (result.isSuccess) {
       final notRestedYet =
           selectedIds.where((id) => !activeRestedIds.contains(id)).toSet();
 
       Set<String> newRestedIds;
       if (notRestedYet.length < result.restingPlayers.length) {
-        // Cycle reset occurred - only new cycle players go into rested list
         final newCyclePlayers = result.restingPlayers.skip(notRestedYet.length);
         newRestedIds = newCyclePlayers.map((p) => p.id).toSet();
       } else {
-        // Normal operation
         newRestedIds = Set<String>.from(activeRestedIds)
           ..addAll(result.restingPlayers.map((p) => p.id));
       }
@@ -82,45 +79,12 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
     return a.length == b.length && a.containsAll(b);
   }
 
-  Future<void> _showPlayerSelectionDialog() async {
-    // Ensure data is loaded before showing dialog
-    await ref.read(playersProvider.notifier).loadPlayers();
-    await ref.read(restedPlayersProvider.notifier).loadRestedPlayers();
-
-    final players = ref.read(playersProvider).value ?? [];
-    final currentSelection = ref.read(selectedPlayersProvider).value ?? {};
-    final restedIds = ref.read(restedPlayersProvider).value ?? {};
-
-    if (!mounted) return;
-
-    final result = await showDialog<Set<String>?>(
-      // Note the ?
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (context) => _PlayerSelectionDialog(
-            players: players,
-            initialSelection: currentSelection,
-            restedIds: restedIds,
-            onResetCycle: _resetCycle,
-          ),
-    );
-
-    if (result != null) {
-      // This will handle both cases
-      await ref.read(selectedPlayersProvider.notifier).updateSelection(result);
-      setState(() {
-        _result = null;
-      });
-    }
-  }
-
   Future<void> _resetCycle() async {
     final confirm = await showDialog<bool>(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('تصفير الأستراحات', textAlign: TextAlign.right),
+            title: const Text('إعادة تعيين الدورة', textAlign: TextAlign.right),
             content: const Text(
               'هل تريد بدء دورة جديدة؟ سيتم اعتبار جميع اللاعبين كأنهم لم يستريحوا من قبل.',
               textAlign: TextAlign.right,
@@ -152,6 +116,36 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
           ),
         );
       }
+    }
+  }
+
+  Future<void> _showPlayerSelectionDialog() async {
+    await ref.read(playersProvider.notifier).loadPlayers();
+    await ref.read(restedPlayersProvider.notifier).loadRestedPlayers();
+
+    final players = ref.read(playersProvider).value ?? [];
+    final currentSelection = ref.read(selectedPlayersProvider).value ?? {};
+    final restedIds = ref.read(restedPlayersProvider).value ?? {};
+
+    if (!mounted) return;
+
+    final result = await showDialog<Set<String>?>(
+      context: context,
+      barrierDismissible: false,
+      builder:
+          (context) => _PlayerSelectionDialog(
+            players: players,
+            initialSelection: currentSelection,
+            restedIds: restedIds,
+            onResetCycle: _resetCycle,
+          ),
+    );
+
+    if (result != null) {
+      await ref.read(selectedPlayersProvider.notifier).updateSelection(result);
+      setState(() {
+        _result = null;
+      });
     }
   }
 
@@ -209,7 +203,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
                           ),
                         )
                         : const Icon(Icons.shuffle),
-                label: Text("بدء القرعة", style: const TextStyle(fontSize: 16)),
+                label: Text("القرعة", style: const TextStyle(fontSize: 16)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
                       canGenerate ? Colors.grey.shade800 : Colors.grey.shade400,
@@ -225,7 +219,6 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
             ),
           ),
           const SizedBox(height: 16),
-
           Expanded(child: _buildResultsView()),
         ],
       ),
@@ -266,7 +259,6 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       );
     }
 
-    // Add this safety check
     if (_result!.teams.isEmpty) {
       return const Center(
         child: Padding(
@@ -284,14 +276,51 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // First match (blue theme)
+          ..._buildAllMatches(),
+          if (_result!.restingPlayers.isNotEmpty) ...[
+            const SizedBox(height: 30),
+            RestingPlayersCard(players: _result!.restingPlayers),
+          ],
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildAllMatches() {
+    final matches = <Widget>[];
+    final colors = [
+      Colors.blue.shade700,
+      Colors.green.shade700,
+      Colors.purple.shade700,
+      Colors.orange.shade700,
+      Colors.teal.shade700,
+      Colors.pink.shade700,
+    ];
+
+    for (int i = 0; i < _result!.teams.length; i += 2) {
+      if (i + 1 < _result!.teams.length) {
+        final matchNumber = (i ~/ 2) + 1;
+        final color = colors[i ~/ 2 % colors.length];
+
+        if (i > 0) {
+          matches.add(const SizedBox(height: 24));
+        }
+
+        if (_result!.teams.length > 2) {
+          matches.add(
+            Text(
+              'المباراة ${_getArabicNumber(matchNumber)}',
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          );
+          matches.add(const SizedBox(height: 12));
+        }
+
+        matches.add(
           Row(
             children: [
               Expanded(
-                child: TeamDisplayCard(
-                  team: _result!.teams[0],
-                  color: Colors.blue.shade700,
-                ),
+                child: TeamDisplayCard(team: _result!.teams[i], color: color),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -314,65 +343,36 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
               ),
               Expanded(
                 child: TeamDisplayCard(
-                  team: _result!.teams[1],
-                  color: Colors.blue.shade700,
+                  team: _result!.teams[i + 1],
+                  color: color,
                 ),
               ),
             ],
           ),
+        );
+      }
+    }
 
-          // Second match if exists (green theme)
-          if (_result!.teams.length == 4) ...[
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: TeamDisplayCard(
-                    team: _result!.teams[2],
-                    color: Colors.green.shade700,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.red, width: 2),
-                    ),
-                    child: const Text(
-                      'VS',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.red,
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: TeamDisplayCard(
-                    team: _result!.teams[3],
-                    color: Colors.green.shade700,
-                  ),
-                ),
-              ],
-            ),
-          ],
+    return matches;
+  }
 
-          // Resting players
-          if (_result!.restingPlayers.isNotEmpty) ...[
-            const SizedBox(height: 30),
-            RestingPlayersCard(players: _result!.restingPlayers),
-          ],
-        ],
-      ),
-    );
+  String _getArabicNumber(int number) {
+    const arabicNumbers = [
+      'الأولى',
+      'الثانية',
+      'الثالثة',
+      'الرابعة',
+      'الخامسة',
+      'السادسة',
+      'السابعة',
+      'الثامنة',
+    ];
+    return number <= arabicNumbers.length
+        ? arabicNumbers[number - 1]
+        : '$number';
   }
 }
 
-// ============== Player Selection Dialog ==============
 class _PlayerSelectionDialog extends StatefulWidget {
   final List<Player> players;
   final Set<String> initialSelection;
@@ -383,7 +383,7 @@ class _PlayerSelectionDialog extends StatefulWidget {
     required this.players,
     required this.initialSelection,
     required this.restedIds,
-    this.onResetCycle, // Add this
+    this.onResetCycle,
   });
 
   @override
@@ -429,12 +429,9 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                 : ListView.builder(
                   shrinkWrap: true,
                   itemCount: widget.players.length,
-
-                  // In random_teams_page.dart, update the ListView.builder in _PlayerSelectionDialog:
                   itemBuilder: (context, index) {
                     final player = widget.players[index];
                     final isSelected = _currentSelection.contains(player.id);
-                    // Show green check for players who have rested (regardless of current selection)
                     final hasRested = widget.restedIds.contains(player.id);
 
                     return ListTile(
@@ -463,7 +460,6 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Action buttons row
               Row(
                 children: [
                   Expanded(
@@ -504,7 +500,6 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                 ],
               ),
               const SizedBox(height: 12),
-              // Reset cycle button
               if (widget.onResetCycle != null)
                 SizedBox(
                   width: double.infinity,
@@ -527,7 +522,6 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                   ),
                 ),
               const SizedBox(height: 16),
-              // Main action buttons
               Row(
                 children: [
                   Expanded(
