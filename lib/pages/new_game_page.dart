@@ -16,13 +16,16 @@ class NewGamePage extends ConsumerStatefulWidget {
 
 class _NewGamePageState extends ConsumerState<NewGamePage> {
   String? t1p1, t1p2, t2p1, t2p2;
-  int? winningTeam;
+  bool isKonkan = false; // Add this
   bool _isSaving = false;
 
-  Future<void> _saveGame() async {
-    if (t1p1 == null || t1p2 == null || t2p1 == null || t2p2 == null || winningTeam == null) {
+  Future<void> _saveGame(int winningTeam) async {
+    if (t1p1 == null || t1p2 == null || t2p1 == null || t2p2 == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الرجاء ملء جميع الحقول'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('الرجاء اختيار جميع اللاعبين'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -36,7 +39,8 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
       team1Player2: t1p2!,
       team2Player1: t2p1!,
       team2Player2: t2p2!,
-      winningTeam: winningTeam!,
+      winningTeam: winningTeam,
+      isKonkan: isKonkan, // Add this
     );
 
     final success = await ref.read(gamesProvider.notifier).addGame(game);
@@ -45,7 +49,10 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم حفظ اللعبة بنجاح'), backgroundColor: Colors.green),
+        const SnackBar(
+          content: Text('تم حفظ اللعبة بنجاح'),
+          backgroundColor: Colors.green,
+        ),
       );
       Navigator.pop(context);
     }
@@ -97,6 +104,25 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
                       onPlayer2Changed: (v) => setState(() => t2p2 = v),
                     ),
                     const SizedBox(height: 24),
+                    
+                    // Konkan checkbox
+                    Card(
+                      elevation: 4,
+                      child: CheckboxListTile(
+                        title: const Text(
+                          'كونكان',
+                          textAlign: TextAlign.right,
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        value: isKonkan,
+                        onChanged: (value) => setState(() => isKonkan = value ?? false),
+                        controlAffinity: ListTileControlAffinity.leading,
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Winner selection buttons - save directly
                     AppCard(
                       child: Column(
                         children: [
@@ -109,55 +135,48 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
                             children: [
                               Expanded(
                                 child: ElevatedButton(
-                                  onPressed: () => setState(() => winningTeam = 1),
+                                  onPressed: _isSaving ? null : () => _saveGame(1),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        winningTeam == 1 ? Colors.blue : Colors.grey.shade300,
-                                    foregroundColor: winningTeam == 1 ? Colors.white : Colors.black,
+                                    backgroundColor: Colors.blue,
+                                    foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(vertical: 16),
                                   ),
-                                  child: const Text('الفريق الأول'),
+                                  child: _isSaving
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text('الفريق الأول'),
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: ElevatedButton(
-                                  onPressed: () => setState(() => winningTeam = 2),
+                                  onPressed: _isSaving ? null : () => _saveGame(2),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        winningTeam == 2 ? Colors.red : Colors.grey.shade300,
-                                    foregroundColor: winningTeam == 2 ? Colors.white : Colors.black,
+                                    backgroundColor: Colors.red,
+                                    foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(vertical: 16),
                                   ),
-                                  child: const Text('الفريق الثاني'),
+                                  child: _isSaving
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text('الفريق الثاني'),
                                 ),
                               ),
                             ],
                           ),
                         ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isSaving ? null : _saveGame,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
-                        ),
-                        child:
-                            _isSaving
-                                ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                                : const Text('حفظ اللعبة', style: TextStyle(fontSize: 18)),
                       ),
                     ),
                   ],
@@ -200,27 +219,46 @@ class _TeamCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               decoration: InputDecoration(
                 labelText: 'اللاعب الأول',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               value: player1,
-              items:
-                  players.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name))).toList(),
+              items: players
+                  .map((p) => DropdownMenuItem(
+                        value: p.id,
+                        child: Text(p.name),
+                      ))
+                  .toList(),
               onChanged: onPlayer1Changed,
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               decoration: InputDecoration(
                 labelText: 'اللاعب الثاني',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               value: player2,
-              items:
-                  players.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name))).toList(),
+              items: players
+                  .map((p) => DropdownMenuItem(
+                        value: p.id,
+                        child: Text(p.name),
+                      ))
+                  .toList(),
               onChanged: onPlayer2Changed,
             ),
           ],

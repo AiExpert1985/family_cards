@@ -117,7 +117,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('إعادة تعيين الدورة', textAlign: TextAlign.right),
+            title: const Text('تصفير الأستراحات', textAlign: TextAlign.right),
             content: const Text(
               'هل تريد بدء دورة جديدة؟ سيتم اعتبار جميع اللاعبين كأنهم لم يستريحوا من قبل.',
               textAlign: TextAlign.right,
@@ -130,7 +130,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                child: const Text('إعادة تعيين'),
+                child: const Text('تصفير الاستراحات'),
               ),
             ],
           ),
@@ -144,7 +144,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('تم إعادة تعيين الدورة بنجاح'),
+            content: Text('تم تصفير الاستراحات بنجاح'),
             backgroundColor: Colors.green,
           ),
         );
@@ -174,7 +174,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
                 icon: const Icon(Icons.check_box),
                 label: Text(
                   selectedCount > 0
-                      ? 'اختيار اللاعبين المشاركين ($selectedCount مختار)'
+                      ? 'اختيار اللاعبين المشاركين ($selectedCount )'
                       : 'اختيار اللاعبين المشاركين',
                   style: const TextStyle(fontSize: 16),
                 ),
@@ -433,7 +433,7 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                         });
                       },
                       icon: const Icon(Icons.clear_all, size: 18),
-                      label: const Text('إلغاء تحديد الكل'),
+                      label: const Text('إلغاء الكل'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: BorderSide(color: Colors.red.shade300),

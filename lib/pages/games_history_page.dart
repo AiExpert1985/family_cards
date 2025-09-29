@@ -81,41 +81,68 @@ class GamesHistoryPage extends ConsumerWidget {
                         '${_getPlayerName(players, game.team2Player1)} و ${_getPlayerName(players, game.team2Player2)}';
                     final score = game.winningTeam == 1 ? '1-0' : '0-1';
 
-                    return Card(
-                      elevation: 2,
-                      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    '$team1  $score  $team2',
-                                    textAlign: TextAlign.right,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    DateFormat('yyyy/MM/dd - HH:mm').format(game.date),
-                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _deleteGame(context, ref, game.id),
-                            ),
-                          ],
-                        ),
+return Card(
+  elevation: game.isKonkan ? 4 : 2, // Higher elevation for Konkan
+  margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+  color: game.isKonkan ? Colors.amber.shade50 : null, // Special background
+  shape: game.isKonkan
+      ? RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.amber.shade600, width: 2), // Gold border
+        )
+      : null,
+  child: Padding(
+    padding: const EdgeInsets.all(12),
+    child: Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (game.isKonkan) ...[
+                    Icon(Icons.emoji_events, color: Colors.amber.shade700, size: 20),
+                    const SizedBox(width: 4),
+                    Text(
+                      'كونكان',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.amber.shade700,
                       ),
-                    );
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: Text(
+                      '$team1  $score  $team2',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: game.isKonkan ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                DateFormat('yyyy/MM/dd - HH:mm').format(game.date),
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.delete, color: Colors.red),
+          onPressed: () => _deleteGame(context, ref, game.id),
+        ),
+      ],
+    ),
+  ),
+);
                   },
                 ),
             loading: () => const Center(child: CircularProgressIndicator()),
