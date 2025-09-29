@@ -11,6 +11,7 @@ class SettingsPage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        const SizedBox(height: 70),
         Card(
           child: ListTile(
             leading: const Icon(Icons.people, color: Colors.blue, size: 32),
