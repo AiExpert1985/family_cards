@@ -41,9 +41,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
 
     if (!_setsEqual(lastSelected, selectedIds)) {
       activeRestedIds = {};
-      await ref
-          .read(restedPlayersProvider.notifier)
-          .updateRested(activeRestedIds);
+      await ref.read(restedPlayersProvider.notifier).updateRested(activeRestedIds);
       await storage.saveLastSelectedPlayerIdsCheck(selectedIds);
     }
 
@@ -54,8 +52,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
     );
 
     if (result.isSuccess) {
-      final notRestedYet =
-          selectedIds.where((id) => !activeRestedIds.contains(id)).toSet();
+      final notRestedYet = selectedIds.where((id) => !activeRestedIds.contains(id)).toSet();
 
       Set<String> newRestedIds;
       if (notRestedYet.length < result.restingPlayers.length) {
@@ -110,10 +107,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم تصفير الاستراحات بنجاح'),
-            backgroundColor: Colors.green,
-          ),
+          const SnackBar(content: Text('تم تصفير الاستراحات بنجاح'), backgroundColor: Colors.green),
         );
       }
     }
@@ -179,9 +173,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
                   backgroundColor: Colors.grey.shade700,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 onPressed: _showPlayerSelectionDialog,
               ),
@@ -197,24 +189,17 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
                         ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
                         : const Icon(Icons.shuffle),
                 label: Text("القرعة", style: const TextStyle(fontSize: 16)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      canGenerate ? Colors.grey.shade800 : Colors.grey.shade400,
+                  backgroundColor: canGenerate ? Colors.grey.shade800 : Colors.grey.shade400,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                onPressed:
-                    canGenerate && !_isGenerating ? _generateTeams : null,
+                onPressed: canGenerate && !_isGenerating ? _generateTeams : null,
               ),
             ),
           ),
@@ -319,34 +304,15 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
         matches.add(
           Row(
             children: [
-              Expanded(
-                child: TeamDisplayCard(team: _result!.teams[i], color: color),
-              ),
+              Expanded(child: TeamDisplayCard(team: _result!.teams[i], color: color)),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.red, width: 2),
-                  ),
-                  child: const Text(
-                    'VS',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.red,
-                    ),
-                  ),
+                child: const Text(
+                  'ضد',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.red),
                 ),
               ),
-              Expanded(
-                child: TeamDisplayCard(
-                  team: _result!.teams[i + 1],
-                  color: color,
-                ),
-              ),
+              Expanded(child: TeamDisplayCard(team: _result!.teams[i + 1], color: color)),
             ],
           ),
         );
@@ -367,9 +333,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       'السابعة',
       'الثامنة',
     ];
-    return number <= arabicNumbers.length
-        ? arabicNumbers[number - 1]
-        : '$number';
+    return number <= arabicNumbers.length ? arabicNumbers[number - 1] : '$number';
   }
 }
 
@@ -438,11 +402,7 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                       title: Text(player.name, textAlign: TextAlign.right),
                       trailing:
                           hasRested
-                              ? const Icon(
-                                Icons.check_circle,
-                                color: Colors.green,
-                                size: 20,
-                              )
+                              ? const Icon(Icons.check_circle, color: Colors.green, size: 20)
                               : null,
                       leading: Checkbox(
                         value: isSelected,
@@ -483,9 +443,7 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                     child: OutlinedButton.icon(
                       onPressed: () {
                         setState(() {
-                          _currentSelection.addAll(
-                            widget.players.map((p) => p.id),
-                          );
+                          _currentSelection.addAll(widget.players.map((p) => p.id));
                         });
                       },
                       icon: const Icon(Icons.select_all, size: 18),
@@ -531,32 +489,23 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                         foregroundColor: Colors.grey.shade600,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text(
-                        'إلغاء',
-                        style: TextStyle(fontSize: 16),
-                      ),
+                      child: const Text('إلغاء', style: TextStyle(fontSize: 16)),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     flex: 2,
                     child: ElevatedButton(
-                      onPressed:
-                          () => Navigator.pop(context, _currentSelection),
+                      onPressed: () => Navigator.pop(context, _currentSelection),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.teal,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
                       child: const Text(
                         'حفظ',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
