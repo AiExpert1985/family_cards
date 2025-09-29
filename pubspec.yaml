@@ -34,6 +34,9 @@ dependencies:
   intl: ^0.18.1
   flutter_launcher_icons: ^0.13.1
   flutter_riverpod: ^2.4.0
+  path_provider: ^2.1.1
+  file_picker: ^8.1.4
+  share_plus: ^7.2.1
 
 flutter_launcher_icons:
   android: true

@@ -1,4 +1,5 @@
 // ============== providers/providers.dart ==============
+import 'package:family_cards/services/sync_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/player.dart';
 import '../models/game.dart';
@@ -52,6 +53,13 @@ class PlayersNotifier extends StateNotifier<AsyncValue<List<Player>>> {
     return success;
   }
 
+  Future<void> updatePlayers(List<Player> players) async {
+    final success = await _storage.savePlayers(players);
+    if (success) {
+      state = AsyncValue.data(players);
+    }
+  }
+
   Future<bool> deletePlayer(String id) async {
     final currentPlayers = state.value ?? [];
     final updatedPlayers = currentPlayers.where((p) => p.id != id).toList();
@@ -75,6 +83,15 @@ class GamesNotifier extends StateNotifier<AsyncValue<List<Game>>> {
 
   GamesNotifier(this._storage) : super(const AsyncValue.loading()) {
     loadGames();
+  }
+
+  // In GamesNotifier:
+  Future<void> updateGames(List<Game> games) async {
+    final success = await _storage.saveGames(games);
+    if (success) {
+      games.sort((a, b) => b.date.compareTo(a.date));
+      state = AsyncValue.data(games);
+    }
   }
 
   Future<void> loadGames() async {
@@ -202,3 +219,5 @@ class RestedPlayersNotifier extends StateNotifier<AsyncValue<Set<String>>> {
     return success;
   }
 }
+
+final syncServiceProvider = Provider((ref) => SyncService());

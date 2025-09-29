@@ -1,4 +1,5 @@
 // ============== pages/home_page.dart ==============
+import 'package:family_cards/pages/sync_page.dart';
 import 'package:flutter/material.dart';
 import '../widgets/common/app_button.dart';
 import 'players_page.dart';
@@ -14,7 +15,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('هلا بالشريــچ'),
+        title: const Text('هلا بالشريـــچ'),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
       ),
@@ -32,7 +33,6 @@ class HomePage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 50),
                 AppButton(
                   icon: Icons.people,
                   label: 'إدارة اللاعبين',
@@ -67,13 +67,17 @@ class HomePage extends StatelessWidget {
                   color: Colors.purple,
                   onPressed: () => _navigate(context, const StatisticsPage()),
                 ),
+                const SizedBox(height: 20),
+                AppButton(
+                  icon: Icons.sync,
+                  label: 'مزامنة البيانات',
+                  color: Color(0xFF6B9AC4),
+                  onPressed: () => _navigate(context, const SyncPage()),
+                ),
                 const Spacer(),
                 Container(
                   margin: const EdgeInsets.only(top: 16),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(12),
@@ -84,11 +88,7 @@ class HomePage extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Icon(
-                            Icons.phone,
-                            size: 14,
-                            color: Colors.grey.shade600,
-                          ),
+                          Icon(Icons.phone, size: 14, color: Colors.grey.shade600),
                           const SizedBox(width: 6),
                           Text(
                             '07701791983',
@@ -112,11 +112,8 @@ class HomePage extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'v1.0.0', // Add your version here
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey.shade500,
-                            ),
+                            'v1.0.0',
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
                           ),
                         ],
                       ),
