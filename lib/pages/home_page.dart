@@ -111,10 +111,12 @@ class HomePage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Icon(
-                            Icons.code,
-                            size: 14,
-                            color: Colors.grey.shade600,
+                          Text(
+                            'v1.0.0', // Add your version here
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade500,
+                            ),
                           ),
                         ],
                       ),
