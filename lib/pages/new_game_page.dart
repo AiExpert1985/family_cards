@@ -104,7 +104,7 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
                       onPlayer2Changed: (v) => setState(() => t2p2 = v),
                     ),
                     const SizedBox(height: 12),
-                    
+
                     // Konkan checkbox
                     Card(
                       elevation: 4,
@@ -112,66 +112,82 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
                         title: const Text(
                           'كونكان',
                           textAlign: TextAlign.right,
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         value: isKonkan,
-                        onChanged: (value) => setState(() => isKonkan = value ?? false),
+                        onChanged:
+                            (value) =>
+                                setState(() => isKonkan = value ?? false),
                         controlAffinity: ListTileControlAffinity.leading,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 12),
-                    
+
                     // Winner selection buttons - save directly
                     AppCard(
                       child: Column(
                         children: [
                           const Text(
                             'الفريق الفائز',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(height: 12),
                           Row(
                             children: [
                               Expanded(
                                 child: ElevatedButton(
-                                  onPressed: _isSaving ? null : () => _saveGame(1),
+                                  onPressed:
+                                      _isSaving ? null : () => _saveGame(2),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blue,
+                                    backgroundColor: Colors.red,
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
                                   ),
-                                  child: _isSaving
-                                      ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : const Text('الفريق الأول'),
+                                  child:
+                                      _isSaving
+                                          ? const SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                          : const Text('الفريق الثاني'),
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: ElevatedButton(
-                                  onPressed: _isSaving ? null : () => _saveGame(2),
+                                  onPressed:
+                                      _isSaving ? null : () => _saveGame(1),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
+                                    backgroundColor: Colors.blue,
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
                                   ),
-                                  child: _isSaving
-                                      ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : const Text('الفريق الثاني'),
+                                  child:
+                                      _isSaving
+                                          ? const SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                          : const Text('الفريق الأول'),
                                 ),
                               ),
                             ],
@@ -186,7 +202,8 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('خطأ: ${error.toString()}')),
+        error:
+            (error, stack) => Center(child: Text('خطأ: ${error.toString()}')),
       ),
     );
   }
@@ -236,12 +253,13 @@ class _TeamCard extends StatelessWidget {
                 ),
               ),
               value: player1,
-              items: players
-                  .map((p) => DropdownMenuItem(
-                        value: p.id,
-                        child: Text(p.name),
-                      ))
-                  .toList(),
+              items:
+                  players
+                      .map(
+                        (p) =>
+                            DropdownMenuItem(value: p.id, child: Text(p.name)),
+                      )
+                      .toList(),
               onChanged: onPlayer1Changed,
             ),
             const SizedBox(height: 12),
@@ -253,12 +271,13 @@ class _TeamCard extends StatelessWidget {
                 ),
               ),
               value: player2,
-              items: players
-                  .map((p) => DropdownMenuItem(
-                        value: p.id,
-                        child: Text(p.name),
-                      ))
-                  .toList(),
+              items:
+                  players
+                      .map(
+                        (p) =>
+                            DropdownMenuItem(value: p.id, child: Text(p.name)),
+                      )
+                      .toList(),
               onChanged: onPlayer2Changed,
             ),
           ],

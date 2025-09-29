@@ -103,7 +103,7 @@ class HomePage extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            'محمد نوفل',
+                            'محمد النوفل',
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey.shade700,
