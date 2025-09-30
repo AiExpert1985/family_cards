@@ -42,12 +42,14 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
 
   Future<void> _saveGame(int winningTeam) async {
     if (t1p1 == null || t1p2 == null || t2p1 == null || t2p2 == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('الرجاء اختيار جميع اللاعبين'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('الرجاء اختيار جميع اللاعبين'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
       return;
     }
 
@@ -61,21 +63,37 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
       team2Player1: t2p1!,
       team2Player2: t2p2!,
       winningTeam: winningTeam,
-      isKonkan: isKonkan, // Add this
+      isKonkan: isKonkan,
     );
 
     final success = await ref.read(gamesProvider.notifier).addGame(game);
 
+    if (!mounted) return;
+
     setState(() => _isSaving = false);
 
-    if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تم حفظ اللعبة بنجاح'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context);
+    if (success) {
+      // Remove this specific match from saved teams
+      final wasPreFilled = widget.prefilledTeam1Player1 != null;
+      if (wasPreFilled) {
+        final storage = ref.read(storageServiceProvider);
+        await storage.removePlayedMatch(
+          team1Player1: t1p1!,
+          team1Player2: t1p2!,
+          team2Player1: t2p1!,
+          team2Player2: t2p2!,
+        );
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم حفظ اللعبة بنجاح'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      }
     }
   }
 

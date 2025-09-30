@@ -157,4 +157,49 @@ class StorageService {
       return false;
     }
   }
+
+  Future<bool> removePlayedMatch({
+    required String team1Player1,
+    required String team1Player2,
+    required String team2Player1,
+    required String team2Player2,
+  }) async {
+    try {
+      final lastResult = await getLastTeamResult();
+      if (lastResult == null) return true;
+
+      final teams = lastResult['teams'] as List;
+      final restingPlayers = lastResult['restingPlayers'] as List;
+
+      // Find and remove the two teams that match
+      final updatedTeams =
+          teams.where((team) {
+            final teamList = team as List;
+            // Check if this is team 1 or team 2
+            final isTeam1 =
+                teamList.contains(team1Player1) &&
+                teamList.contains(team1Player2);
+            final isTeam2 =
+                teamList.contains(team2Player1) &&
+                teamList.contains(team2Player2);
+            return !isTeam1 && !isTeam2; // Keep teams that don't match
+          }).toList();
+
+      // If no teams left, clear everything
+      if (updatedTeams.isEmpty) {
+        return await clearLastTeamResult();
+      }
+
+      // Save updated result
+      final updatedResult = {
+        'teams': updatedTeams,
+        'restingPlayers': restingPlayers,
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+
+      return await saveLastTeamResult(updatedResult);
+    } catch (e) {
+      return false;
+    }
+  }
 }

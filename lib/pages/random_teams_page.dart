@@ -22,10 +22,11 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(selectedPlayersProvider.notifier).loadSelectedPlayers();
-      ref.read(restedPlayersProvider.notifier).loadRestedPlayers();
-      _loadLastResult(); // Add this
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ref.read(playersProvider.notifier).loadPlayers();
+      await ref.read(selectedPlayersProvider.notifier).loadSelectedPlayers();
+      await ref.read(restedPlayersProvider.notifier).loadRestedPlayers();
+      await _loadLastResult();
     });
   }
 
@@ -33,9 +34,23 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
     final storage = ref.read(storageServiceProvider);
     final lastResult = await storage.getLastTeamResult();
 
-    if (lastResult != null) {
-      final players = ref.read(playersProvider).value ?? [];
+    if (lastResult == null) {
+      setState(() {
+        _result = null;
+      });
+      return;
+    }
 
+    final players = ref.read(playersProvider).value ?? [];
+
+    if (players.isEmpty) {
+      setState(() {
+        _result = null;
+      });
+      return;
+    }
+
+    try {
       final teams =
           (lastResult['teams'] as List)
               .map(
@@ -67,6 +82,10 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
           teams: teams,
           restingPlayers: restingPlayers,
         );
+      });
+    } catch (e) {
+      setState(() {
+        _result = null;
       });
     }
   }
@@ -128,6 +147,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       _isGenerating = false;
     });
 
+    // Save result after setting state
     if (result.isSuccess) {
       await _saveResult(result);
     }
@@ -445,8 +465,8 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
         : '$number';
   }
 
-  void _navigateToNewGame(List<Player> team1, List<Player> team2) {
-    Navigator.push(
+  void _navigateToNewGame(List<Player> team1, List<Player> team2) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder:
@@ -458,6 +478,9 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
             ),
       ),
     );
+
+    // Reload result after returning from new game page
+    await _loadLastResult();
   }
 }
 
