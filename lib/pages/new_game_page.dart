@@ -8,7 +8,18 @@ import '../widgets/common/empty_state.dart';
 import '../widgets/common/app_card.dart';
 
 class NewGamePage extends ConsumerStatefulWidget {
-  const NewGamePage({super.key});
+  final String? prefilledTeam1Player1;
+  final String? prefilledTeam1Player2;
+  final String? prefilledTeam2Player1;
+  final String? prefilledTeam2Player2;
+
+  const NewGamePage({
+    super.key,
+    this.prefilledTeam1Player1,
+    this.prefilledTeam1Player2,
+    this.prefilledTeam2Player1,
+    this.prefilledTeam2Player2,
+  });
 
   @override
   ConsumerState<NewGamePage> createState() => _NewGamePageState();
@@ -16,8 +27,18 @@ class NewGamePage extends ConsumerStatefulWidget {
 
 class _NewGamePageState extends ConsumerState<NewGamePage> {
   String? t1p1, t1p2, t2p1, t2p2;
-  bool isKonkan = false; // Add this
+  bool isKonkan = false;
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with prefilled values if provided
+    t1p1 = widget.prefilledTeam1Player1;
+    t1p2 = widget.prefilledTeam1Player2;
+    t2p1 = widget.prefilledTeam2Player1;
+    t2p2 = widget.prefilledTeam2Player2;
+  }
 
   Future<void> _saveGame(int winningTeam) async {
     if (t1p1 == null || t1p2 == null || t2p1 == null || t2p2 == null) {

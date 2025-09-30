@@ -9,7 +9,10 @@ import '../models/game.dart';
 
 class SyncService {
   // Export data to JSON file
-  Future<String?> exportData({required List<Player> players, required List<Game> games}) async {
+  Future<bool> exportData({
+    required List<Player> players,
+    required List<Game> games,
+  }) async {
     try {
       final data = {
         'players': players.map((p) => p.toJson()).toList(),
@@ -19,20 +22,30 @@ class SyncService {
 
       final jsonString = jsonEncode(data);
       final directory = await getApplicationDocumentsDirectory();
-      final fileName = 'cards_backup_${DateTime.now().millisecondsSinceEpoch}.json';
+      final fileName =
+          'cards_backup_${DateTime.now().millisecondsSinceEpoch}.json';
       final file = File('${directory.path}/$fileName');
 
       await file.writeAsString(jsonString);
-      return file.path;
+
+      // Share the file
+      final result = await Share.shareXFiles([
+        XFile(file.path),
+      ], text: 'نسخة احتياطية من بيانات اللعبة');
+
+      return result.status == ShareResultStatus.success ||
+          result.status == ShareResultStatus.dismissed;
     } catch (e) {
-      return null;
+      return false;
     }
   }
 
   // Share exported file
   Future<bool> shareExport(String filePath) async {
     try {
-      await Share.shareXFiles([XFile(filePath)], text: 'نسخة احتياطية من بيانات اللعبة');
+      await Share.shareXFiles([
+        XFile(filePath),
+      ], text: 'نسخة احتياطية من بيانات اللعبة');
       return true;
     } catch (e) {
       return false;
@@ -56,9 +69,11 @@ class SyncService {
       final jsonString = await file.readAsString();
       final data = jsonDecode(jsonString);
 
-      final importedPlayers = (data['players'] as List).map((p) => Player.fromJson(p)).toList();
+      final importedPlayers =
+          (data['players'] as List).map((p) => Player.fromJson(p)).toList();
 
-      final importedGames = (data['games'] as List).map((g) => Game.fromJson(g)).toList();
+      final importedGames =
+          (data['games'] as List).map((g) => Game.fromJson(g)).toList();
 
       // Merge logic: avoid duplicates by ID
       final mergedPlayers = _mergePlayers(currentPlayers, importedPlayers);

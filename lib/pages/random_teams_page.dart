@@ -1,4 +1,5 @@
 // ============== pages/random_teams_page.dart ==============
+import 'package:family_cards/pages/new_game_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/player.dart';
@@ -24,6 +25,59 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(selectedPlayersProvider.notifier).loadSelectedPlayers();
       ref.read(restedPlayersProvider.notifier).loadRestedPlayers();
+      _loadLastResult(); // Add this
+    });
+  }
+
+  Future<void> _loadLastResult() async {
+    final storage = ref.read(storageServiceProvider);
+    final lastResult = await storage.getLastTeamResult();
+
+    if (lastResult != null) {
+      final players = ref.read(playersProvider).value ?? [];
+
+      final teams =
+          (lastResult['teams'] as List)
+              .map(
+                (teamList) =>
+                    (teamList as List)
+                        .map(
+                          (playerId) => players.firstWhere(
+                            (p) => p.id == playerId,
+                            orElse:
+                                () => Player(id: playerId, name: 'غير معروف'),
+                          ),
+                        )
+                        .toList(),
+              )
+              .toList();
+
+      final restingPlayers =
+          (lastResult['restingPlayers'] as List)
+              .map(
+                (playerId) => players.firstWhere(
+                  (p) => p.id == playerId,
+                  orElse: () => Player(id: playerId, name: 'غير معروف'),
+                ),
+              )
+              .toList();
+
+      setState(() {
+        _result = TeamGenerationResult(
+          teams: teams,
+          restingPlayers: restingPlayers,
+        );
+      });
+    }
+  }
+
+  Future<void> _saveResult(TeamGenerationResult result) async {
+    final storage = ref.read(storageServiceProvider);
+    await storage.saveLastTeamResult({
+      'teams':
+          result.teams.map((team) => team.map((p) => p.id).toList()).toList(),
+      'restingPlayers': result.restingPlayers.map((p) => p.id).toList(),
+      'timestamp': DateTime.now().toIso8601String(),
     });
   }
 
@@ -41,7 +95,9 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
 
     if (!_setsEqual(lastSelected, selectedIds)) {
       activeRestedIds = {};
-      await ref.read(restedPlayersProvider.notifier).updateRested(activeRestedIds);
+      await ref
+          .read(restedPlayersProvider.notifier)
+          .updateRested(activeRestedIds);
       await storage.saveLastSelectedPlayerIdsCheck(selectedIds);
     }
 
@@ -52,7 +108,8 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
     );
 
     if (result.isSuccess) {
-      final notRestedYet = selectedIds.where((id) => !activeRestedIds.contains(id)).toSet();
+      final notRestedYet =
+          selectedIds.where((id) => !activeRestedIds.contains(id)).toSet();
 
       Set<String> newRestedIds;
       if (notRestedYet.length < result.restingPlayers.length) {
@@ -70,6 +127,10 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       _result = result;
       _isGenerating = false;
     });
+
+    if (result.isSuccess) {
+      await _saveResult(result);
+    }
   }
 
   bool _setsEqual(Set<String> a, Set<String> b) {
@@ -107,7 +168,10 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم تصفير الاستراحات بنجاح'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('تم تصفير الاستراحات بنجاح'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     }
@@ -137,6 +201,8 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
 
     if (result != null) {
       await ref.read(selectedPlayersProvider.notifier).updateSelection(result);
+      final storage = ref.read(storageServiceProvider);
+      await storage.clearLastTeamResult(); // Add this
       setState(() {
         _result = null;
       });
@@ -173,7 +239,9 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
                   backgroundColor: Colors.grey.shade700,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 onPressed: _showPlayerSelectionDialog,
               ),
@@ -189,17 +257,24 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
                         ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                         : const Icon(Icons.shuffle),
                 label: Text("القرعة", style: const TextStyle(fontSize: 16)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: canGenerate ? Colors.grey.shade800 : Colors.grey.shade400,
+                  backgroundColor:
+                      canGenerate ? Colors.grey.shade800 : Colors.grey.shade400,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                onPressed: canGenerate && !_isGenerating ? _generateTeams : null,
+                onPressed:
+                    canGenerate && !_isGenerating ? _generateTeams : null,
               ),
             ),
           ),
@@ -304,15 +379,47 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
         matches.add(
           Row(
             children: [
-              Expanded(child: TeamDisplayCard(team: _result!.teams[i], color: color)),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: const Text(
-                  'ضد',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.red),
+              Expanded(
+                child: TeamDisplayCard(
+                  team: _result!.teams[i],
+                  color: color,
+                  onTap:
+                      () => _navigateToNewGame(
+                        _result!.teams[i],
+                        _result!.teams[i + 1],
+                      ), // Add this
                 ),
               ),
-              Expanded(child: TeamDisplayCard(team: _result!.teams[i + 1], color: color)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.red, width: 2),
+                  ),
+                  child: const Text(
+                    'VS',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: TeamDisplayCard(
+                  team: _result!.teams[i + 1],
+                  color: color,
+                  onTap:
+                      () => _navigateToNewGame(
+                        _result!.teams[i],
+                        _result!.teams[i + 1],
+                      ), // Add this
+                ),
+              ),
             ],
           ),
         );
@@ -333,7 +440,24 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       'السابعة',
       'الثامنة',
     ];
-    return number <= arabicNumbers.length ? arabicNumbers[number - 1] : '$number';
+    return number <= arabicNumbers.length
+        ? arabicNumbers[number - 1]
+        : '$number';
+  }
+
+  void _navigateToNewGame(List<Player> team1, List<Player> team2) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (_) => NewGamePage(
+              prefilledTeam1Player1: team1[0].id,
+              prefilledTeam1Player2: team1[1].id,
+              prefilledTeam2Player1: team2[0].id,
+              prefilledTeam2Player2: team2[1].id,
+            ),
+      ),
+    );
   }
 }
 
@@ -402,7 +526,11 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                       title: Text(player.name, textAlign: TextAlign.right),
                       trailing:
                           hasRested
-                              ? const Icon(Icons.check_circle, color: Colors.green, size: 20)
+                              ? const Icon(
+                                Icons.check_circle,
+                                color: Colors.green,
+                                size: 20,
+                              )
                               : null,
                       leading: Checkbox(
                         value: isSelected,
@@ -443,7 +571,9 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                     child: OutlinedButton.icon(
                       onPressed: () {
                         setState(() {
-                          _currentSelection.addAll(widget.players.map((p) => p.id));
+                          _currentSelection.addAll(
+                            widget.players.map((p) => p.id),
+                          );
                         });
                       },
                       icon: const Icon(Icons.select_all, size: 18),
@@ -489,23 +619,32 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                         foregroundColor: Colors.grey.shade600,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text('إلغاء', style: TextStyle(fontSize: 16)),
+                      child: const Text(
+                        'إلغاء',
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     flex: 2,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context, _currentSelection),
+                      onPressed:
+                          () => Navigator.pop(context, _currentSelection),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.teal,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                       child: const Text(
                         'حفظ',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),

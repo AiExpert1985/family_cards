@@ -27,7 +27,10 @@ class StorageService {
   Future<bool> savePlayers(List<Player> players) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_playersKey, jsonEncode(players.map((e) => e.toJson()).toList()));
+      await prefs.setString(
+        _playersKey,
+        jsonEncode(players.map((e) => e.toJson()).toList()),
+      );
       return true;
     } catch (e) {
       return false;
@@ -50,7 +53,10 @@ class StorageService {
   Future<bool> saveGames(List<Game> games) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_gamesKey, jsonEncode(games.map((e) => e.toJson()).toList()));
+      await prefs.setString(
+        _gamesKey,
+        jsonEncode(games.map((e) => e.toJson()).toList()),
+      );
       return true;
     } catch (e) {
       return false;
@@ -113,6 +119,39 @@ class StorageService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static const String _lastTeamResultKey = 'lastTeamResult';
+
+  Future<Map<String, dynamic>?> getLastTeamResult() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? data = prefs.getString(_lastTeamResultKey);
+    if (data == null || data.isEmpty) return null;
+    try {
+      return jsonDecode(data);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> saveLastTeamResult(Map<String, dynamic> result) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_lastTeamResultKey, jsonEncode(result));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> clearLastTeamResult() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_lastTeamResultKey);
       return true;
     } catch (e) {
       return false;

@@ -16,11 +16,9 @@ class _SyncPageState extends ConsumerState<SyncPage> {
   Future<void> _exportData() async {
     setState(() => _isProcessing = true);
 
-    // Wait for data to load if not already loaded
     final playersAsync = ref.read(playersProvider);
     final gamesAsync = ref.read(gamesProvider);
 
-    // Reload if not loaded
     if (!playersAsync.hasValue) {
       await ref.read(playersProvider.notifier).loadPlayers();
     }
@@ -28,14 +26,16 @@ class _SyncPageState extends ConsumerState<SyncPage> {
       await ref.read(gamesProvider.notifier).loadGames();
     }
 
-    // Get the loaded data
     final players = ref.read(playersProvider).value ?? [];
     final games = ref.read(gamesProvider).value ?? [];
 
     if (players.isEmpty && games.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('لا توجد بيانات للتصدير'), backgroundColor: Colors.orange),
+          const SnackBar(
+            content: Text('لا توجد بيانات للتصدير'),
+            backgroundColor: Colors.orange,
+          ),
         );
       }
       setState(() => _isProcessing = false);
@@ -43,23 +43,22 @@ class _SyncPageState extends ConsumerState<SyncPage> {
     }
 
     final syncService = ref.read(syncServiceProvider);
-    final filePath = await syncService.exportData(players: players, games: games);
+    final success = await syncService.exportData(
+      players: players,
+      games: games,
+    );
 
-    if (filePath != null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('تم تصدير ${players.length} لاعب و ${games.length} مباراة'),
-            backgroundColor: Colors.green,
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? 'تم التصدير: ${players.length} لاعب و ${games.length} مباراة'
+                : 'فشل التصدير',
           ),
-        );
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('فشل التصدير'), backgroundColor: Colors.red));
-      }
+          backgroundColor: success ? Colors.green : Colors.red,
+        ),
+      );
     }
 
     setState(() => _isProcessing = false);
@@ -93,9 +92,12 @@ class _SyncPageState extends ConsumerState<SyncPage> {
       }
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('فشل الاستيراد'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('فشل الاستيراد'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
 
