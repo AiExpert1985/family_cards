@@ -9,7 +9,7 @@ import '../models/game.dart';
 
 class SyncService {
   // Export data to JSON file
-  Future<bool> exportData({
+  Future<String?> exportData({
     required List<Player> players,
     required List<Game> games,
   }) async {
@@ -27,12 +27,18 @@ class SyncService {
       final file = File('${directory.path}/$fileName');
 
       await file.writeAsString(jsonString);
+      return file.path; // Return the path
+    } catch (e) {
+      return null;
+    }
+  }
 
-      // Share the file
+  // Add a new method for sharing:
+  Future<bool> shareFile(String filePath) async {
+    try {
       final result = await Share.shareXFiles([
-        XFile(file.path),
+        XFile(filePath),
       ], text: 'نسخة احتياطية من بيانات اللعبة');
-
       return result.status == ShareResultStatus.success ||
           result.status == ShareResultStatus.dismissed;
     } catch (e) {

@@ -13,7 +13,7 @@ class SyncPage extends ConsumerStatefulWidget {
 class _SyncPageState extends ConsumerState<SyncPage> {
   bool _isProcessing = false;
 
-  Future<void> _exportData() async {
+  Future<void> _exportData({required bool share}) async {
     setState(() => _isProcessing = true);
 
     final playersAsync = ref.read(playersProvider);
@@ -43,22 +43,38 @@ class _SyncPageState extends ConsumerState<SyncPage> {
     }
 
     final syncService = ref.read(syncServiceProvider);
-    final success = await syncService.exportData(
+    final filePath = await syncService.exportData(
       players: players,
       games: games,
     );
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            success
-                ? 'تم التصدير: ${players.length} لاعب و ${games.length} مباراة'
-                : 'فشل التصدير',
+    if (filePath != null) {
+      if (share) {
+        await syncService.shareFile(filePath);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              share
+                  ? 'تم المشاركة: ${players.length} لاعب و ${games.length} مباراة'
+                  : 'تم الحفظ: ${players.length} لاعب و ${games.length} مباراة',
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
           ),
-          backgroundColor: success ? Colors.green : Colors.red,
-        ),
-      );
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('فشل التصدير'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
 
     setState(() => _isProcessing = false);
@@ -134,11 +150,27 @@ class _SyncPageState extends ConsumerState<SyncPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: _isProcessing ? null : _exportData,
-                  icon: const Icon(Icons.upload),
-                  label: const Text('تصدير البيانات'),
+                  onPressed:
+                      _isProcessing ? null : () => _exportData(share: true),
+                  icon: const Icon(Icons.share),
+                  label: const Text('مشاركة البيانات'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed:
+                      _isProcessing ? null : () => _exportData(share: false),
+                  icon: const Icon(Icons.save),
+                  label: const Text('حفظ في الجهاز'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
@@ -152,7 +184,7 @@ class _SyncPageState extends ConsumerState<SyncPage> {
                   icon: const Icon(Icons.download),
                   label: const Text('استيراد ودمج البيانات'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
