@@ -22,8 +22,10 @@ class SettingsPage extends StatelessWidget {
             ),
             trailing: const Icon(Icons.arrow_back_ios, size: 16),
             onTap:
-                () =>
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const PlayersPage())),
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PlayersPage()),
+                ),
           ),
         ),
         const SizedBox(height: 12),
@@ -37,7 +39,10 @@ class SettingsPage extends StatelessWidget {
             ),
             trailing: const Icon(Icons.arrow_back_ios, size: 16),
             onTap:
-                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SyncPage())),
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SyncPage()),
+                ),
           ),
         ),
         const SizedBox(height: 24),
@@ -77,7 +82,7 @@ class SettingsPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'الإصدار: v2.0.0',
+                  'الإصدار: v2.1.0',
                   textAlign: TextAlign.right,
                   style: TextStyle(fontSize: 14),
                 ),
