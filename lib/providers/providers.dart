@@ -14,9 +14,10 @@ final teamGeneratorServiceProvider = Provider((ref) => TeamGeneratorService());
 final statisticsServiceProvider = Provider((ref) => StatisticsService());
 
 // Players State
-final playersProvider = StateNotifierProvider<PlayersNotifier, AsyncValue<List<Player>>>((ref) {
-  return PlayersNotifier(ref.read(storageServiceProvider));
-});
+final playersProvider =
+    StateNotifierProvider<PlayersNotifier, AsyncValue<List<Player>>>((ref) {
+      return PlayersNotifier(ref.read(storageServiceProvider));
+    });
 
 class PlayersNotifier extends StateNotifier<AsyncValue<List<Player>>> {
   final StorageService _storage;
@@ -74,9 +75,10 @@ class PlayersNotifier extends StateNotifier<AsyncValue<List<Player>>> {
 }
 
 // Games State
-final gamesProvider = StateNotifierProvider<GamesNotifier, AsyncValue<List<Game>>>((ref) {
-  return GamesNotifier(ref.read(storageServiceProvider));
-});
+final gamesProvider =
+    StateNotifierProvider<GamesNotifier, AsyncValue<List<Game>>>((ref) {
+      return GamesNotifier(ref.read(storageServiceProvider));
+    });
 
 class GamesNotifier extends StateNotifier<AsyncValue<List<Game>>> {
   final StorageService _storage;
@@ -106,9 +108,18 @@ class GamesNotifier extends StateNotifier<AsyncValue<List<Game>>> {
   }
 
   Future<bool> addGame(Game game) async {
-    final currentGames = state.value ?? [];
-    final updatedGames = [...currentGames, game];
+    // Ensure games are loaded first
+    if (!state.hasValue || state.value == null) {
+      await loadGames();
+    }
 
+    final currentGames = state.value ?? [];
+
+    // Double-check by reading from storage directly
+    final storedGames = await _storage.getGames();
+    final gamesToUpdate = storedGames.isNotEmpty ? storedGames : currentGames;
+
+    final updatedGames = [...gamesToUpdate, game];
     final success = await _storage.saveGames(updatedGames);
 
     if (success) {
@@ -119,9 +130,18 @@ class GamesNotifier extends StateNotifier<AsyncValue<List<Game>>> {
   }
 
   Future<bool> deleteGame(String id) async {
-    final currentGames = state.value ?? [];
-    final updatedGames = currentGames.where((g) => g.id != id).toList();
+    // Ensure games are loaded first
+    if (!state.hasValue || state.value == null) {
+      await loadGames();
+    }
 
+    final currentGames = state.value ?? [];
+
+    // Double-check by reading from storage directly
+    final storedGames = await _storage.getGames();
+    final gamesToUpdate = storedGames.isNotEmpty ? storedGames : currentGames;
+
+    final updatedGames = gamesToUpdate.where((g) => g.id != id).toList();
     final success = await _storage.saveGames(updatedGames);
 
     if (success) {
@@ -141,7 +161,10 @@ final statisticsProvider = Provider<AsyncValue<List<PlayerStats>>>((ref) {
     data:
         (players) => gamesAsync.when(
           data: (games) {
-            final stats = statsService.calculateStats(players: players, games: games);
+            final stats = statsService.calculateStats(
+              players: players,
+              games: games,
+            );
             return AsyncValue.data(stats);
           },
           loading: () => const AsyncValue.loading(),
@@ -154,7 +177,9 @@ final statisticsProvider = Provider<AsyncValue<List<PlayerStats>>>((ref) {
 
 // Selected Players State
 final selectedPlayersProvider =
-    StateNotifierProvider<SelectedPlayersNotifier, AsyncValue<Set<String>>>((ref) {
+    StateNotifierProvider<SelectedPlayersNotifier, AsyncValue<Set<String>>>((
+      ref,
+    ) {
       return SelectedPlayersNotifier(ref.read(storageServiceProvider));
     });
 
@@ -188,11 +213,12 @@ class SelectedPlayersNotifier extends StateNotifier<AsyncValue<Set<String>>> {
 }
 
 // Rested Players State
-final restedPlayersProvider = StateNotifierProvider<RestedPlayersNotifier, AsyncValue<Set<String>>>(
-  (ref) {
-    return RestedPlayersNotifier(ref.read(storageServiceProvider));
-  },
-);
+final restedPlayersProvider =
+    StateNotifierProvider<RestedPlayersNotifier, AsyncValue<Set<String>>>((
+      ref,
+    ) {
+      return RestedPlayersNotifier(ref.read(storageServiceProvider));
+    });
 
 class RestedPlayersNotifier extends StateNotifier<AsyncValue<Set<String>>> {
   final StorageService _storage;
