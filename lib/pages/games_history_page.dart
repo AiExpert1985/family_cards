@@ -4,10 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/providers.dart';
 import '../models/player.dart';
-import '../widgets/common/empty_state.dart';
 
-class GamesHistoryPage extends ConsumerWidget {
+class GamesHistoryPage extends ConsumerStatefulWidget {
   const GamesHistoryPage({super.key});
+
+  @override
+  ConsumerState<GamesHistoryPage> createState() => _GamesHistoryPageState();
+}
+
+class _GamesHistoryPageState extends ConsumerState<GamesHistoryPage> {
+  String? _selectedPlayerId; // Add filter state
 
   String _getPlayerName(List<Player> players, String id) {
     try {
@@ -59,7 +65,8 @@ class GamesHistoryPage extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    // FIXED: Removed 'WidgetRef ref'
     final gamesAsync = ref.watch(gamesProvider);
     final playersAsync = ref.watch(playersProvider);
 
@@ -69,199 +76,274 @@ class GamesHistoryPage extends ConsumerWidget {
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
       ),
-      body: gamesAsync.when(
-        data: (games) {
-          if (games.isEmpty) {
-            return const EmptyState(
-              icon: Icons.history,
-              message: 'لا توجد مباريات\nقم بإضافة مباراة جديدة',
-            );
-          }
+      body: Column(
+        children: [
+          // Filter dropdown
+          playersAsync.when(
+            data: (players) {
+              if (players.isEmpty) return const SizedBox.shrink();
 
-          return playersAsync.when(
-            data:
-                (players) => ListView.builder(
-                  itemCount: games.length,
-                  padding: const EdgeInsets.all(8),
-                  itemBuilder: (context, index) {
-                    final game = games[index];
-                    final score = game.winningTeam == 1 ? '1-0' : '0-1';
-
-                    return Card(
-                      elevation: game.isKonkan ? 4 : 2,
-                      margin: const EdgeInsets.symmetric(
-                        vertical: 6,
-                        horizontal: 8,
+              return Container(
+                padding: const EdgeInsets.all(16),
+                color: Colors.orange.shade50,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          labelText: 'تصفية حسب اللاعب',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        value: _selectedPlayerId,
+                        items: [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('الكل'),
+                          ),
+                          ...players.map(
+                            (p) => DropdownMenuItem(
+                              value: p.id,
+                              child: Text(p.name),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedPlayerId = value;
+                          });
+                        },
                       ),
-                      color: game.isKonkan ? Colors.amber.shade50 : null,
-                      shape:
-                          game.isKonkan
-                              ? RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(
-                                  color: Colors.amber.shade600,
-                                  width: 2,
-                                ),
-                              )
-                              : null,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            // Konkan badge if applicable
-                            if (game.isKonkan) ...[
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
+                    ),
+                    if (_selectedPlayerId != null) ...[
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            _selectedPlayerId = null;
+                          });
+                        },
+                        tooltip: 'إلغاء التصفية',
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+
+          // Games list
+          Expanded(
+            child: gamesAsync.when(
+              data: (allGames) {
+                // Apply filter
+                final games =
+                    _selectedPlayerId == null
+                        ? allGames
+                        : allGames.where((game) {
+                          return game.team1Player1 == _selectedPlayerId ||
+                              game.team1Player2 == _selectedPlayerId ||
+                              game.team2Player1 == _selectedPlayerId ||
+                              game.team2Player2 == _selectedPlayerId;
+                        }).toList();
+
+                if (games.isEmpty) {
+                  return Center(
+                    child: Text(
+                      _selectedPlayerId == null
+                          ? 'لا توجد مباريات\nقم بإضافة مباراة جديدة'
+                          : 'لا توجد مباريات لهذا اللاعب',
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                  );
+                }
+
+                return playersAsync.when(
+                  data:
+                      (players) => ListView.builder(
+                        itemCount: games.length,
+                        padding: const EdgeInsets.all(8),
+                        itemBuilder: (context, index) {
+                          final game = games[index];
+                          final score = game.winningTeam == 1 ? '0-1' : '1-0';
+
+                          return Card(
+                            elevation: game.isKonkan ? 4 : 2,
+                            margin: const EdgeInsets.symmetric(
+                              vertical: 6,
+                              horizontal: 8,
+                            ),
+                            color: game.isKonkan ? Colors.amber.shade50 : null,
+                            shape:
+                                game.isKonkan
+                                    ? RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      side: BorderSide(
+                                        color: Colors.amber.shade600,
+                                        width: 2,
+                                      ),
+                                    )
+                                    : null,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  Icon(
-                                    Icons.emoji_events,
-                                    color: Colors.amber.shade700,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'كونكان',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.amber.shade700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                            ],
-
-                            // Main row: Team 1 - Score - Team 2
-                            Row(
-                              children: [
-                                // Delete button on the left
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.delete,
-                                    color: Colors.red,
-                                  ),
-                                  onPressed:
-                                      () => _deleteGame(context, ref, game.id),
-                                ),
-
-                                Expanded(
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      // Team 1 players (should be on the RIGHT in RTL)
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          Text(
-                                            _getPlayerName(
-                                              players,
-                                              game.team1Player1,
-                                            ),
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          Text(
-                                            _getPlayerName(
-                                              players,
-                                              game.team1Player2,
-                                            ),
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-
-                                      const SizedBox(width: 12),
-
-                                      // Score
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 8,
+                                  if (game.isKonkan) ...[
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Icon(
+                                          Icons.emoji_events,
+                                          color: Colors.amber.shade700,
+                                          size: 18,
                                         ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade200,
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          score,
-                                          style: const TextStyle(
-                                            fontSize: 18,
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'كونكان',
+                                          style: TextStyle(
+                                            fontSize: 12,
                                             fontWeight: FontWeight.bold,
+                                            color: Colors.amber.shade700,
                                           ),
                                         ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                  ],
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.delete,
+                                          color: Colors.red,
+                                        ),
+                                        onPressed:
+                                            () => _deleteGame(
+                                              context,
+                                              ref,
+                                              game.id,
+                                            ),
                                       ),
-
-                                      const SizedBox(width: 12),
-
-                                      // Team 2 players (should be on the LEFT in RTL)
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          Text(
-                                            _getPlayerName(
-                                              players,
-                                              game.team2Player1,
+                                      Expanded(
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                Text(
+                                                  _getPlayerName(
+                                                    players,
+                                                    game.team2Player1,
+                                                  ),
+                                                  style: const TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  _getPlayerName(
+                                                    players,
+                                                    game.team2Player2,
+                                                  ),
+                                                  style: const TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
+                                            const SizedBox(width: 12),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 8,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey.shade200,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                score,
+                                                style: const TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ),
-                                          ),
-                                          Text(
-                                            _getPlayerName(
-                                              players,
-                                              game.team2Player2,
+                                            const SizedBox(width: 12),
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                Text(
+                                                  _getPlayerName(
+                                                    players,
+                                                    game.team1Player1,
+                                                  ),
+                                                  style: const TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  _getPlayerName(
+                                                    players,
+                                                    game.team1Player2,
+                                                  ),
+                                                  style: const TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 8),
-
-                            // Date below
-                            Text(
-                              DateFormat('yyyy/MM/dd').format(game.date),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    DateFormat('yyyy/MM/dd').format(game.date),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                    textAlign: TextAlign.right,
+                                  ),
+                                ],
                               ),
-                              textAlign: TextAlign.right,
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error:
-                (error, stack) =>
-                    Center(child: Text('خطأ: ${error.toString()}')),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error:
-            (error, stack) => Center(child: Text('خطأ: ${error.toString()}')),
+                  loading:
+                      () => const Center(child: CircularProgressIndicator()),
+                  error:
+                      (error, stack) =>
+                          Center(child: Text('خطأ: ${error.toString()}')),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error:
+                  (error, stack) =>
+                      Center(child: Text('خطأ: ${error.toString()}')),
+            ),
+          ),
+        ],
       ),
     );
   }

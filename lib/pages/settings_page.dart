@@ -109,10 +109,6 @@ class SettingsPage extends ConsumerWidget {
               textAlign: TextAlign.right,
               style: TextStyle(fontSize: 16, color: Colors.red),
             ),
-            subtitle: const Text(
-              'هل ترغب بحذف جميع البيانات',
-              textAlign: TextAlign.right,
-            ),
             trailing: const Icon(
               Icons.arrow_back_ios,
               size: 16,
