@@ -151,16 +151,26 @@ class _ManualRestManagerSheetState extends State<ManualRestManagerSheet> {
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: _clearSelection,
-                          icon: const Icon(Icons.clear),
+                          icon: const Icon(Icons.clear_all, size: 18),
                           label: const Text('إزالة الكل'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red,
+                            side: BorderSide(color: Colors.red.shade300),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: _selectAll,
-                          icon: const Icon(Icons.done_all),
+                          icon: const Icon(Icons.select_all, size: 18),
                           label: const Text('تحديد الكل'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.blue,
+                            side: BorderSide(color: Colors.blue.shade300),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
                         ),
                       ),
                     ],
@@ -221,9 +231,16 @@ class _ManualRestManagerSheetState extends State<ManualRestManagerSheet> {
               child: Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
+                    child: TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('إلغاء'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.grey.shade600,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text(
+                        'إلغاء',
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -232,9 +249,20 @@ class _ManualRestManagerSheetState extends State<ManualRestManagerSheet> {
                       onPressed:
                           () => Navigator.of(context).pop(_currentRestingIds),
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: Colors.teal,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                      child: const Text('حفظ التعديلات'),
+                      child: const Text(
+                        'حفظ التعديلات',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],
