@@ -44,9 +44,7 @@ class _ManualRestManagerSheetState extends State<ManualRestManagerSheet> {
 
     final query = _searchQuery.toLowerCase();
     return widget.players
-        .where(
-          (player) => player.name.toLowerCase().contains(query),
-        )
+        .where((player) => player.name.toLowerCase().contains(query))
         .toList();
   }
 
@@ -122,9 +120,7 @@ class _ManualRestManagerSheetState extends State<ManualRestManagerSheet> {
                       Expanded(
                         child: Text(
                           'إدارة اللاعبين المستريحين',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
+                          style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
                           textAlign: TextAlign.right,
                         ),
@@ -173,49 +169,52 @@ class _ManualRestManagerSheetState extends State<ManualRestManagerSheet> {
                   Text(
                     'عدد المستريحين: ${_currentRestingIds.length}',
                     textAlign: TextAlign.right,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: Colors.grey.shade600),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 8),
             Expanded(
-              child: filteredPlayers.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'لا يوجد نتائج مطابقة',
-                        style: TextStyle(color: Colors.grey),
+              child:
+                  filteredPlayers.isEmpty
+                      ? const Center(
+                        child: Text(
+                          'لا يوجد نتائج مطابقة',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
+                      : ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        itemBuilder: (context, index) {
+                          final player = filteredPlayers[index];
+                          final isResting = _currentRestingIds.contains(
+                            player.id,
+                          );
+                          return ListTile(
+                            onTap: () => _togglePlayer(player.id),
+                            leading: Checkbox(
+                              value: isResting,
+                              onChanged: (_) => _togglePlayer(player.id),
+                            ),
+                            title: Text(
+                              player.name,
+                              textAlign: TextAlign.right,
+                            ),
+                            trailing:
+                                isResting
+                                    ? const Icon(
+                                      Icons.pause_circle_filled,
+                                      color: Colors.teal,
+                                    )
+                                    : null,
+                          );
+                        },
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemCount: filteredPlayers.length,
                       ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      itemBuilder: (context, index) {
-                        final player = filteredPlayers[index];
-                        final isResting = _currentRestingIds.contains(player.id);
-                        return ListTile(
-                          onTap: () => _togglePlayer(player.id),
-                          leading: Checkbox(
-                            value: isResting,
-                            onChanged: (_) => _togglePlayer(player.id),
-                          ),
-                          title: Text(
-                            player.name,
-                            textAlign: TextAlign.right,
-                          ),
-                          trailing: isResting
-                              ? const Icon(
-                                  Icons.pause_circle_filled,
-                                  color: Colors.teal,
-                                )
-                              : null,
-                        );
-                      },
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemCount: filteredPlayers.length,
-                    ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -230,7 +229,8 @@ class _ManualRestManagerSheetState extends State<ManualRestManagerSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(_currentRestingIds),
+                      onPressed:
+                          () => Navigator.of(context).pop(_currentRestingIds),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),

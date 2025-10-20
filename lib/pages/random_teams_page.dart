@@ -263,6 +263,26 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: SizedBox(
               width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.pause_circle_outline),
+                label: const Text(
+                  'إدارة قائمة المستريحين',
+                  style: TextStyle(fontSize: 16),
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: _showManualRestManager,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: SizedBox(
+              width: double.infinity,
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.pause_circle_outline),
                 label: const Text(
