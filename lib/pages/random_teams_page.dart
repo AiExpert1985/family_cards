@@ -158,53 +158,11 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
     return a.length == b.length && a.containsAll(b);
   }
 
-  Future<void> _resetCycle() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('إعادة تعيين الدورة', textAlign: TextAlign.right),
-            content: const Text(
-              'هل تريد بدء دورة جديدة؟ سيتم اعتبار جميع اللاعبين كأنهم لم يستريحوا من قبل.',
-              textAlign: TextAlign.right,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('إلغاء'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                child: const Text('تصفير الاستراحات'),
-              ),
-            ],
-          ),
-    );
-
-    if (confirm == true) {
-      await ref.read(restedPlayersProvider.notifier).updateRested({});
-      setState(() {
-        _result = null;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم تصفير الاستراحات بنجاح'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    }
-  }
-
   Future<void> _showPlayerSelectionDialog() async {
     await ref.read(playersProvider.notifier).loadPlayers();
-    await ref.read(restedPlayersProvider.notifier).loadRestedPlayers();
 
     final players = ref.read(playersProvider).value ?? [];
     final currentSelection = ref.read(selectedPlayersProvider).value ?? {};
-    final restedIds = ref.read(restedPlayersProvider).value ?? {};
 
     if (!mounted) return;
 
@@ -215,8 +173,6 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
           (context) => _PlayerSelectionDialog(
             players: players,
             initialSelection: currentSelection,
-            restedIds: restedIds,
-            onResetCycle: _resetCycle,
           ),
     );
 
@@ -314,6 +270,28 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
                   style: TextStyle(fontSize: 16),
                 ),
                 style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onPressed: _showManualRestManager,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.pause_circle_outline),
+                label: const Text(
+                  'إدارة قائمة المستريحين',
+                  style: TextStyle(fontSize: 16),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey.shade700,
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -543,14 +521,10 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
 class _PlayerSelectionDialog extends StatefulWidget {
   final List<Player> players;
   final Set<String> initialSelection;
-  final Set<String> restedIds;
-  final Future<void> Function()? onResetCycle;
 
   const _PlayerSelectionDialog({
     required this.players,
     required this.initialSelection,
-    required this.restedIds,
-    this.onResetCycle,
   });
 
   @override
@@ -599,18 +573,8 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                   itemBuilder: (context, index) {
                     final player = widget.players[index];
                     final isSelected = _currentSelection.contains(player.id);
-                    final hasRested = widget.restedIds.contains(player.id);
-
                     return ListTile(
                       title: Text(player.name, textAlign: TextAlign.right),
-                      trailing:
-                          hasRested
-                              ? const Icon(
-                                Icons.check_circle,
-                                color: Colors.green,
-                                size: 20,
-                              )
-                              : null,
                       leading: Checkbox(
                         value: isSelected,
                         onChanged: (_) => _togglePlayer(player.id),
@@ -666,29 +630,7 @@ class _PlayerSelectionDialogState extends State<_PlayerSelectionDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              if (widget.onResetCycle != null)
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      if (widget.onResetCycle != null) {
-                        await widget.onResetCycle!();
-                        if (context.mounted) {
-                          Navigator.pop(context, _currentSelection);
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.refresh, size: 18),
-                    label: const Text('تصفير الاستراحات'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.orange,
-                      side: BorderSide(color: Colors.orange.shade300),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 28),
               Row(
                 children: [
                   Expanded(
