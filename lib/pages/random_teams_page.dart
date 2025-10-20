@@ -243,9 +243,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.check_box),
                     label: Text(
-                      selectedCount > 0
-                          ? 'اختيار اللاعبين المشاركين ($selectedCount )'
-                          : 'اختيار اللاعبين المشاركين',
+                      'اختيار اللاعبين ',
                       style: const TextStyle(fontSize: 16),
                     ),
                     style: ElevatedButton.styleFrom(
@@ -264,7 +262,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.pause_circle_outline),
                     label: const Text(
-                      'إدارة قائمة المستريحين',
+                      'ادارة الاستراحات',
                       style: TextStyle(fontSize: 16),
                     ),
                     style: ElevatedButton.styleFrom(
