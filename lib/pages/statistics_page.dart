@@ -1,6 +1,7 @@
 // ============== pages/statistics_page.dart ==============
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/player_stats.dart';
 import '../providers/providers.dart';
 import '../widgets/common/empty_state.dart';
 
@@ -26,12 +27,14 @@ class StatisticsPage extends ConsumerWidget {
             );
           }
 
+          final ranks = _calculateRanks(stats);
+
           return ListView.builder(
             itemCount: stats.length,
             padding: const EdgeInsets.all(8),
             itemBuilder: (context, index) {
               final stat = stats[index];
-              final rank = index + 1;
+              final rank = ranks[index];
 
               return Card(
                 elevation: 2,
@@ -106,5 +109,25 @@ class StatisticsPage extends ConsumerWidget {
     if (winRate >= 70) return Colors.green;
     if (winRate >= 50) return Colors.orange;
     return Colors.red;
+  }
+
+  List<int> _calculateRanks(List<PlayerStats> stats) {
+    final ranks = <int>[];
+    int? previousPercentage;
+    var previousRank = 0;
+
+    for (var i = 0; i < stats.length; i++) {
+      final currentPercentage = stats[i].winRate.round();
+      final rank =
+          previousPercentage != null && currentPercentage == previousPercentage
+              ? previousRank
+              : i + 1;
+
+      ranks.add(rank);
+      previousPercentage = currentPercentage;
+      previousRank = rank;
+    }
+
+    return ranks;
   }
 }
