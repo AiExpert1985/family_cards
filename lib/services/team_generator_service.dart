@@ -1,6 +1,7 @@
-// Remove the unused import and variable
+import 'dart:math';
+
 // ============== services/team_generator_service.dart ==============
-import '../models/player.dart'; // Remove dart:math import
+import '../models/player.dart';
 import '../models/team_generation_result.dart';
 
 class TeamGeneratorService {
@@ -17,13 +18,15 @@ class TeamGeneratorService {
       );
     }
 
+    final random = Random(DateTime.now().microsecondsSinceEpoch);
+
     final selectedPlayers = allPlayers.where((p) => selectedPlayerIds.contains(p.id)).toList();
 
     final totalSelected = selectedPlayers.length;
     final restingCount = totalSelected % 4 == 0 ? 0 : totalSelected % 4;
 
     if (restingCount == 0) {
-      selectedPlayers.shuffle();
+      selectedPlayers.shuffle(random);
       final teams = <List<Player>>[];
       for (int i = 0; i < selectedPlayers.length; i += 2) {
         teams.add([selectedPlayers[i], selectedPlayers[i + 1]]);
@@ -37,14 +40,15 @@ class TeamGeneratorService {
 
     if (notRestedYet.length >= restingCount) {
       // Normal case
-      notRestedYet.shuffle();
+      notRestedYet.shuffle(random);
       restingPlayers.addAll(notRestedYet.take(restingCount));
     } else {
       // Edge case: cycle reset needed
       restingPlayers.addAll(notRestedYet);
 
       final eligibleForNewCycle =
-          selectedPlayers.where((p) => !restingPlayers.contains(p)).toList()..shuffle();
+          selectedPlayers.where((p) => !restingPlayers.contains(p)).toList()
+            ..shuffle(random);
 
       final stillNeeded = restingCount - notRestedYet.length;
       restingPlayers.addAll(eligibleForNewCycle.take(stillNeeded));
@@ -52,7 +56,7 @@ class TeamGeneratorService {
 
     final playingPlayers =
         selectedPlayers.where((p) => !restingPlayers.any((resting) => resting.id == p.id)).toList()
-          ..shuffle();
+          ..shuffle(random);
 
     final teams = <List<Player>>[];
     for (int i = 0; i < playingPlayers.length; i += 2) {
