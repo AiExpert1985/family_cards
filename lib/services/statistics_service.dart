@@ -5,6 +5,22 @@ import '../models/player_stats.dart';
 
 class StatisticsService {
   List<PlayerStats> calculateStats({required List<Player> players, required List<Game> games}) {
+    return _calculateStats(players: players, games: games);
+  }
+
+  List<PlayerStats> calculateDailyStats({
+    required DateTime date,
+    required List<Player> players,
+    required List<Game> games,
+  }) {
+    final filteredGames = games.where((game) => _isSameDay(game.date, date)).toList();
+    return _calculateStats(players: players, games: filteredGames);
+  }
+
+  List<PlayerStats> _calculateStats({
+    required List<Player> players,
+    required List<Game> games,
+  }) {
     final statsMap = <String, _StatsAccumulator>{};
 
     // Initialize stats for all players
@@ -43,6 +59,12 @@ class StatisticsService {
           ..sort((a, b) => b.winRate.compareTo(a.winRate));
 
     return stats;
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    final localA = a.toLocal();
+    final localB = b.toLocal();
+    return localA.year == localB.year && localA.month == localB.month && localA.day == localB.day;
   }
 
   void _incrementPlayed(Map<String, _StatsAccumulator> map, String playerId) {

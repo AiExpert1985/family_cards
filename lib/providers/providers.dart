@@ -175,6 +175,33 @@ final statisticsProvider = Provider<AsyncValue<List<PlayerStats>>>((ref) {
   );
 });
 
+final selectedStatisticsDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
+
+final dailyStatisticsProvider = Provider<AsyncValue<List<PlayerStats>>>((ref) {
+  final selectedDate = ref.watch(selectedStatisticsDateProvider);
+  final playersAsync = ref.watch(playersProvider);
+  final gamesAsync = ref.watch(gamesProvider);
+  final statsService = ref.watch(statisticsServiceProvider);
+
+  return playersAsync.when(
+    data: (players) => gamesAsync.when(
+      data: (games) {
+        final stats = statsService.calculateDailyStats(
+          date: selectedDate,
+          players: players,
+          games: games,
+        );
+        final filteredStats = stats.where((stat) => stat.played > 0).toList();
+        return AsyncValue.data(filteredStats);
+      },
+      loading: () => const AsyncValue.loading(),
+      error: (e, stack) => AsyncValue.error(e, stack),
+    ),
+    loading: () => const AsyncValue.loading(),
+    error: (e, stack) => AsyncValue.error(e, stack),
+  );
+});
+
 // Selected Players State
 final selectedPlayersProvider =
     StateNotifierProvider<SelectedPlayersNotifier, AsyncValue<Set<String>>>((
