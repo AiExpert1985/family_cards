@@ -1,11 +1,11 @@
 // ============== pages/statistics_page.dart ==============
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../models/player_stats.dart';
 import '../providers/providers.dart';
 import '../widgets/common/empty_state.dart';
+import 'package:intl/intl.dart' as intl;
 
 class StatisticsPage extends ConsumerWidget {
   const StatisticsPage({super.key});
@@ -17,7 +17,7 @@ class StatisticsPage extends ConsumerWidget {
     final selectedDate = ref.watch(selectedStatisticsDateProvider);
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('الإحصائيات'),
@@ -25,10 +25,7 @@ class StatisticsPage extends ConsumerWidget {
           foregroundColor: Colors.white,
           bottom: const TabBar(
             labelColor: Colors.amber,
-            tabs: [
-              Tab(text: 'الإحصائيات العامة'),
-              Tab(text: 'الإحصائيات اليومية'),
-            ],
+            tabs: [Tab(text: 'عام'), Tab(text: 'يومي'), Tab(text: 'لاعبين')],
           ),
         ),
         body: TabBarView(
@@ -42,6 +39,7 @@ class StatisticsPage extends ConsumerWidget {
               emptyMessage: 'لا توجد مباريات في هذا اليوم',
               header: _buildDateSelector(context, ref, selectedDate),
             ),
+            _buildHeadToHeadTab(context, ref),
           ],
         ),
       ),
@@ -98,6 +96,145 @@ class StatisticsPage extends ConsumerWidget {
     );
   }
 
+  Widget _buildHeadToHeadTab(BuildContext context, WidgetRef ref) {
+    final playersAsync = ref.watch(playersProvider);
+    final gamesAsync = ref.watch(gamesProvider);
+    final selectedPlayerId = ref.watch(selectedHeadToHeadPlayerProvider);
+
+    return playersAsync.when(
+      data: (players) {
+        if (players.isEmpty) {
+          return Center(
+            child: EmptyState(
+              icon: Icons.people_outline,
+              message: 'لا يوجد لاعبون لحساب المواجهات.',
+            ),
+          );
+        }
+
+        final effectivePlayerId = selectedPlayerId ?? players.first.id;
+        if (selectedPlayerId == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.read(selectedHeadToHeadPlayerProvider.notifier).state =
+                effectivePlayerId;
+          });
+        }
+
+        return gamesAsync.when(
+          data: (games) {
+            final statsService = ref.watch(statisticsServiceProvider);
+            final headToHeadStats = statsService.calculateHeadToHeadStats(
+              playerId: effectivePlayerId,
+              players: players,
+              games: games,
+            );
+
+            return Directionality(
+              textDirection: TextDirection.rtl,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      value: effectivePlayerId,
+                      decoration: InputDecoration(
+                        labelText: 'اختر اللاعب',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                      ),
+                      items:
+                          players
+                              .map(
+                                (player) => DropdownMenuItem(
+                                  value: player.id,
+                                  child: Text(player.name),
+                                ),
+                              )
+                              .toList(),
+                      onChanged:
+                          (value) =>
+                              ref
+                                  .read(
+                                    selectedHeadToHeadPlayerProvider.notifier,
+                                  )
+                                  .state = value,
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child:
+                          headToHeadStats.isEmpty
+                              ? EmptyState(
+                                icon: Icons.sports_kabaddi,
+                                message: 'لا توجد مواجهات مسجلة لهذا اللاعب.',
+                              )
+                              : ListView.separated(
+                                itemCount: headToHeadStats.length,
+                                separatorBuilder:
+                                    (_, __) => const SizedBox(height: 8),
+                                itemBuilder: (context, index) {
+                                  final stat = headToHeadStats[index];
+                                  return Card(
+                                    elevation: 2,
+                                    child: ListTile(
+                                      title: Text(
+                                        stat.opponentName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        'فوز: ${stat.won} • خسارة: ${stat.lost}',
+                                      ),
+                                      trailing: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: _getWinRateColor(stat.winRate),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          stat.winRateText,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error:
+              (error, _) => Center(
+                child: Text('حدث خطأ أثناء جلب المواجهات: ${error.toString()}'),
+              ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error:
+          (error, _) => Center(
+            child: Text('حدث خطأ أثناء جلب اللاعبين: ${error.toString()}'),
+          ),
+    );
+  }
+
   Card _buildStatCard(PlayerStats stat, int rank) {
     return Card(
       elevation: 2,
@@ -146,7 +283,7 @@ class StatisticsPage extends ConsumerWidget {
     WidgetRef ref,
     DateTime selectedDate,
   ) {
-    final formattedDate = DateFormat('yyyy/MM/dd').format(selectedDate);
+    final formattedDate = intl.DateFormat('yyyy/MM/dd').format(selectedDate);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Row(
@@ -237,10 +374,10 @@ class StatisticsPage extends ConsumerWidget {
 
     for (var i = 0; i < stats.length; i++) {
       final currentPercentage = stats[i].winRate.round();
-      final rank = previousPercentage != null &&
-              currentPercentage == previousPercentage
-          ? uniqueRank
-          : ++uniqueRank;
+      final rank =
+          previousPercentage != null && currentPercentage == previousPercentage
+              ? uniqueRank
+              : ++uniqueRank;
 
       ranks.add(rank);
       previousPercentage = currentPercentage;

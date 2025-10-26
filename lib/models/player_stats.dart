@@ -16,3 +16,21 @@ class PlayerStats {
   String get winRateText => '${winRate.toStringAsFixed(0)}%';
   int get lost => played - won;
 }
+
+class HeadToHeadStat {
+  final String opponentId;
+  final String opponentName;
+  final int played;
+  final int won;
+
+  const HeadToHeadStat({
+    required this.opponentId,
+    required this.opponentName,
+    required this.played,
+    required this.won,
+  });
+
+  int get lost => played - won;
+  double get winRate => played > 0 ? (won / played * 100) : 0;
+  String get winRateText => '${winRate.toStringAsFixed(0)}%';
+}
