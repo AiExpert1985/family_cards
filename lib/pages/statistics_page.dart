@@ -7,14 +7,25 @@ import '../models/player_stats.dart';
 import '../providers/providers.dart';
 import '../widgets/common/empty_state.dart';
 
-class StatisticsPage extends ConsumerWidget {
+enum _StatisticsView { overall, daily }
+
+class StatisticsPage extends ConsumerStatefulWidget {
   const StatisticsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StatisticsPage> createState() => _StatisticsPageState();
+}
+
+class _StatisticsPageState extends ConsumerState<StatisticsPage> {
+  var _selectedView = _StatisticsView.overall;
+
+  @override
+  Widget build(BuildContext context) {
     final overallStatsAsync = ref.watch(statisticsProvider);
     final dailyStatsAsync = ref.watch(dailyStatisticsProvider);
     final selectedDate = ref.watch(selectedStatisticsDateProvider);
+
+    final isDailyView = _selectedView == _StatisticsView.daily;
 
     return DefaultTabController(
       length: 2,
@@ -44,55 +55,113 @@ class StatisticsPage extends ConsumerWidget {
           ],
         ),
       ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildViewButton(
+                    label: 'الإحصائيات العامة',
+                    isSelected: _selectedView == _StatisticsView.overall,
+                    onPressed: () {
+                      if (_selectedView != _StatisticsView.overall) {
+                        setState(() => _selectedView = _StatisticsView.overall);
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildViewButton(
+                    label: 'الإحصائيات اليومية',
+                    isSelected: isDailyView,
+                    onPressed: () {
+                      if (_selectedView != _StatisticsView.daily) {
+                        setState(() => _selectedView = _StatisticsView.daily);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isDailyView)
+            _buildDateSelector(context, ref, selectedDate),
+          Expanded(
+            child: _buildStatsContent(
+              statsAsync: isDailyView ? dailyStatsAsync : overallStatsAsync,
+              emptyMessage: isDailyView
+                  ? 'لا توجد مباريات في هذا اليوم'
+                  : 'لا توجد إحصائيات\nقم بإضافة مباريات أولاً',
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildStatsTab({
+  Widget _buildStatsContent({
     required AsyncValue<List<PlayerStats>> statsAsync,
     required String emptyMessage,
-    Widget? header,
   }) {
-    return Column(
-      children: [
-        if (header != null) header,
-        Expanded(
-          child: statsAsync.when(
-            data: (stats) {
-              if (stats.isEmpty) {
-                return Center(
-                  child: EmptyState(
-                    icon: Icons.bar_chart,
-                    message: emptyMessage,
-                  ),
-                );
-              }
-
-              final ranks = _calculateRanks(stats);
-
-              return ListView.builder(
-                itemCount: stats.length,
-                padding: const EdgeInsets.all(8),
-                itemBuilder: (context, index) {
-                  final stat = stats[index];
-                  final rank = ranks[index];
-                  return _buildStatCard(stat, rank);
-                },
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stack) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text('حدث خطأ: ${error.toString()}'),
-                ],
-              ),
+    return statsAsync.when(
+      data: (stats) {
+        if (stats.isEmpty) {
+          return Center(
+            child: EmptyState(
+              icon: Icons.bar_chart,
+              message: emptyMessage,
             ),
-          ),
+          );
+        }
+
+        final ranks = _calculateRanks(stats);
+
+        return ListView.builder(
+          itemCount: stats.length,
+          padding: const EdgeInsets.all(8),
+          itemBuilder: (context, index) {
+            final stat = stats[index];
+            final rank = ranks[index];
+            return _buildStatCard(stat, rank);
+          },
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('حدث خطأ: ${error.toString()}'),
+          ],
         ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildViewButton({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onPressed,
+  }) {
+    return OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        backgroundColor: isSelected ? Colors.purple : Colors.white,
+        foregroundColor: isSelected ? Colors.white : Colors.purple,
+        side: const BorderSide(color: Colors.purple, width: 2),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      onPressed: onPressed,
+      child: Text(
+        label,
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ),
     );
   }
 
