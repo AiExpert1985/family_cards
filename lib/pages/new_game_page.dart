@@ -1,6 +1,7 @@
 // ============== pages/new_game_page.dart ==============
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../models/player.dart';
 import '../models/game.dart';
 import '../providers/providers.dart';
@@ -29,6 +30,7 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
   String? t1p1, t1p2, t2p1, t2p2;
   bool isKonkan = false;
   bool _isSaving = false;
+  DateTime _selectedDate = DateTime.now();
 
   @override
   void initState() {
@@ -38,6 +40,37 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
     t1p2 = widget.prefilledTeam1Player2;
     t2p1 = widget.prefilledTeam2Player1;
     t2p2 = widget.prefilledTeam2Player2;
+  }
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final initialDate = _selectedDate.isAfter(now) ? now : _selectedDate;
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked == null) {
+      return;
+    }
+
+    final currentTime = DateTime.now();
+
+    setState(() {
+      _selectedDate = DateTime(
+        picked.year,
+        picked.month,
+        picked.day,
+        currentTime.hour,
+        currentTime.minute,
+        currentTime.second,
+        currentTime.millisecond,
+        currentTime.microsecond,
+      );
+    });
   }
 
   Future<void> _saveGame(int winningTeam) async {
@@ -57,7 +90,7 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
 
     final game = Game(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      date: DateTime.now(),
+      date: _selectedDate,
       team1Player1: t1p1!,
       team1Player2: t1p2!,
       team2Player1: t2p1!,
@@ -141,6 +174,25 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
                       player2: t2p2,
                       onPlayer1Changed: (v) => setState(() => t2p1 = v),
                       onPlayer2Changed: (v) => setState(() => t2p2 = v),
+                    ),
+                    const SizedBox(height: 12),
+                    AppCard(
+                      child: ListTile(
+                        title: const Text(
+                          'تاريخ المباراة',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                        subtitle: Text(
+                          DateFormat('yyyy/MM/dd').format(_selectedDate),
+                          textAlign: TextAlign.right,
+                        ),
+                        trailing: const Icon(Icons.calendar_today),
+                        onTap: _isSaving ? null : _pickDate,
+                      ),
                     ),
                     const SizedBox(height: 12),
 
