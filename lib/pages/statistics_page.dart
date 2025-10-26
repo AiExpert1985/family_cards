@@ -27,11 +27,33 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage> {
 
     final isDailyView = _selectedView == _StatisticsView.daily;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('الإحصائيات'),
-        backgroundColor: Colors.purple,
-        foregroundColor: Colors.white,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('الإحصائيات'),
+          backgroundColor: Colors.purple,
+          foregroundColor: Colors.white,
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'الإحصائيات العامة'),
+              Tab(text: 'الإحصائيات اليومية'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _buildStatsTab(
+              statsAsync: overallStatsAsync,
+              emptyMessage: 'لا توجد إحصائيات\nقم بإضافة مباريات أولاً',
+            ),
+            _buildStatsTab(
+              statsAsync: dailyStatsAsync,
+              emptyMessage: 'لا توجد مباريات في هذا اليوم',
+              header: _buildDateSelector(context, ref, selectedDate),
+            ),
+          ],
+        ),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
