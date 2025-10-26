@@ -1,6 +1,7 @@
 // ============== pages/new_game_page.dart ==============
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../models/player.dart';
 import '../models/game.dart';
 import '../providers/providers.dart';
@@ -184,8 +185,8 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
                               horizontal: 12,
                             ),
                             child: ListTile(
-                              title: const Text(
-                                'تاريخ',
+                              title: Text(
+                                DateFormat('yyyy/MM/dd').format(_selectedDate),
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,

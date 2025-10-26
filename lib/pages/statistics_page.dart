@@ -233,18 +233,17 @@ class StatisticsPage extends ConsumerWidget {
   List<int> _calculateRanks(List<PlayerStats> stats) {
     final ranks = <int>[];
     int? previousPercentage;
-    var previousRank = 0;
+    var uniqueRank = 0;
 
     for (var i = 0; i < stats.length; i++) {
       final currentPercentage = stats[i].winRate.round();
-      final rank =
-          previousPercentage != null && currentPercentage == previousPercentage
-              ? previousRank
-              : i + 1;
+      final rank = previousPercentage != null &&
+              currentPercentage == previousPercentage
+          ? uniqueRank
+          : ++uniqueRank;
 
       ranks.add(rank);
       previousPercentage = currentPercentage;
-      previousRank = rank;
     }
 
     return ranks;
