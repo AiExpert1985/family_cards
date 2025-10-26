@@ -24,6 +24,7 @@ class StatisticsPage extends ConsumerWidget {
           backgroundColor: Colors.purple,
           foregroundColor: Colors.white,
           bottom: const TabBar(
+            labelColor: Colors.amber,
             tabs: [
               Tab(text: 'الإحصائيات العامة'),
               Tab(text: 'الإحصائيات اليومية'),
@@ -80,16 +81,17 @@ class StatisticsPage extends ConsumerWidget {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stack) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text('حدث خطأ: ${error.toString()}'),
-                ],
-              ),
-            ),
+            error:
+                (error, stack) => Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error, size: 64, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text('حدث خطأ: ${error.toString()}'),
+                    ],
+                  ),
+                ),
           ),
         ),
       ],
@@ -105,7 +107,10 @@ class StatisticsPage extends ConsumerWidget {
           backgroundColor: _getRankColor(rank),
           child: Text(
             '$rank',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         title: Text(
@@ -136,7 +141,11 @@ class StatisticsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildDateSelector(BuildContext context, WidgetRef ref, DateTime selectedDate) {
+  Widget _buildDateSelector(
+    BuildContext context,
+    WidgetRef ref,
+    DateTime selectedDate,
+  ) {
     final formattedDate = DateFormat('yyyy/MM/dd').format(selectedDate);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -160,7 +169,11 @@ class StatisticsPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _selectDate(BuildContext context, WidgetRef ref, DateTime initialDate) async {
+  Future<void> _selectDate(
+    BuildContext context,
+    WidgetRef ref,
+    DateTime initialDate,
+  ) async {
     final firstDate = _resolveEarliestGameDate(ref) ?? DateTime(2000);
     final lastDate = DateTime.now();
     final pickedDate = await showDatePicker(
@@ -180,17 +193,22 @@ class StatisticsPage extends ConsumerWidget {
   }
 
   DateTime? _resolveEarliestGameDate(WidgetRef ref) {
-    return ref.read(gamesProvider).maybeWhen(
+    return ref
+        .read(gamesProvider)
+        .maybeWhen(
           data: (games) {
             if (games.isEmpty) {
               return null;
             }
             return games
                 .map((game) => game.date.toLocal())
-                .reduce((value, element) => value.isBefore(element) ? value : element);
+                .reduce(
+                  (value, element) => value.isBefore(element) ? value : element,
+                );
           },
           orElse: () => null,
-        )?.toLocal();
+        )
+        ?.toLocal();
   }
 
   Color _getRankColor(int rank) {
