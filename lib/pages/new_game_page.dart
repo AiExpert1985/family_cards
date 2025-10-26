@@ -1,7 +1,6 @@
 // ============== pages/new_game_page.dart ==============
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import '../models/player.dart';
 import '../models/game.dart';
 import '../providers/providers.dart';
@@ -176,46 +175,55 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
                       onPlayer2Changed: (v) => setState(() => t2p2 = v),
                     ),
                     const SizedBox(height: 12),
-                    AppCard(
-                      child: ListTile(
-                        title: const Text(
-                          'تاريخ المباراة',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.right,
-                        ),
-                        subtitle: Text(
-                          DateFormat('yyyy/MM/dd').format(_selectedDate),
-                          textAlign: TextAlign.right,
-                        ),
-                        trailing: const Icon(Icons.calendar_today),
-                        onTap: _isSaving ? null : _pickDate,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Konkan checkbox
-                    Card(
-                      elevation: 4,
-                      child: CheckboxListTile(
-                        title: const Text(
-                          'كونكان',
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AppCard(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 4,
+                              horizontal: 12,
+                            ),
+                            child: ListTile(
+                              title: const Text(
+                                'تاريخ',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.right,
+                              ),
+                              trailing: const Icon(Icons.calendar_today),
+                              onTap: _isSaving ? null : _pickDate,
+                            ),
                           ),
                         ),
-                        value: isKonkan,
-                        onChanged:
-                            (value) =>
-                                setState(() => isKonkan = value ?? false),
-                        controlAffinity: ListTileControlAffinity.leading,
-                      ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: AppCard(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 4,
+                              horizontal: 12,
+                            ),
+                            child: SwitchListTile.adaptive(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text(
+                                'كونكان',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              value: isKonkan,
+                              onChanged:
+                                  _isSaving
+                                      ? null
+                                      : (value) =>
+                                          setState(() => isKonkan = value),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-
                     const SizedBox(height: 12),
 
                     // Winner selection buttons - save directly
