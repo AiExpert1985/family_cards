@@ -13,6 +13,7 @@ class NewGamePage extends ConsumerStatefulWidget {
   final String? prefilledTeam1Player2;
   final String? prefilledTeam2Player1;
   final String? prefilledTeam2Player2;
+  final Game? gameToEdit;
 
   const NewGamePage({
     super.key,
@@ -20,6 +21,7 @@ class NewGamePage extends ConsumerStatefulWidget {
     this.prefilledTeam1Player2,
     this.prefilledTeam2Player1,
     this.prefilledTeam2Player2,
+    this.gameToEdit,
   });
 
   @override
@@ -35,11 +37,20 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
   @override
   void initState() {
     super.initState();
-    // Initialize with prefilled values if provided
-    t1p1 = widget.prefilledTeam1Player1;
-    t1p2 = widget.prefilledTeam1Player2;
-    t2p1 = widget.prefilledTeam2Player1;
-    t2p2 = widget.prefilledTeam2Player2;
+    if (widget.gameToEdit != null) {
+      final game = widget.gameToEdit!;
+      t1p1 = game.team1Player1;
+      t1p2 = game.team1Player2;
+      t2p1 = game.team2Player1;
+      t2p2 = game.team2Player2;
+      isKonkan = game.isKonkan;
+      _selectedDate = game.date;
+    } else {
+      t1p1 = widget.prefilledTeam1Player1;
+      t1p2 = widget.prefilledTeam1Player2;
+      t2p1 = widget.prefilledTeam2Player1;
+      t2p2 = widget.prefilledTeam2Player2;
+    }
   }
 
   Future<void> _pickDate() async {
@@ -89,7 +100,7 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
     setState(() => _isSaving = true);
 
     final game = Game(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.gameToEdit?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       date: _selectedDate,
       team1Player1: t1p1!,
       team1Player2: t1p2!,
@@ -99,29 +110,33 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
       isKonkan: isKonkan,
     );
 
-    final success = await ref.read(gamesProvider.notifier).addGame(game);
+    final isEdit = widget.gameToEdit != null;
+    final success = isEdit
+        ? await ref.read(gamesProvider.notifier).updateGame(game)
+        : await ref.read(gamesProvider.notifier).addGame(game);
 
     if (!mounted) return;
 
     setState(() => _isSaving = false);
 
     if (success) {
-      // Remove this specific match from saved teams
-      final wasPreFilled = widget.prefilledTeam1Player1 != null;
-      if (wasPreFilled) {
-        final storage = ref.read(storageServiceProvider);
-        await storage.removePlayedMatch(
-          team1Player1: t1p1!,
-          team1Player2: t1p2!,
-          team2Player1: t2p1!,
-          team2Player2: t2p2!,
-        );
+      if (!isEdit) {
+        final wasPreFilled = widget.prefilledTeam1Player1 != null;
+        if (wasPreFilled) {
+          final storage = ref.read(storageServiceProvider);
+          await storage.removePlayedMatch(
+            team1Player1: t1p1!,
+            team1Player2: t1p2!,
+            team2Player1: t2p1!,
+            team2Player2: t2p2!,
+          );
+        }
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم حفظ اللعبة بنجاح'),
+          SnackBar(
+            content: Text(isEdit ? 'تم تحديث المباراة بنجاح' : 'تم حفظ اللعبة بنجاح'),
             backgroundColor: Colors.green,
           ),
         );
@@ -136,7 +151,7 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('لعبة جديدة'),
+        title: Text(widget.gameToEdit != null ? 'تعديل المباراة' : 'لعبة جديدة'),
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
       ),

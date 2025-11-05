@@ -149,6 +149,25 @@ class GamesNotifier extends StateNotifier<AsyncValue<List<Game>>> {
     }
     return success;
   }
+
+  Future<bool> updateGame(Game game) async {
+    if (!state.hasValue || state.value == null) {
+      await loadGames();
+    }
+
+    final currentGames = state.value ?? [];
+    final storedGames = await _storage.getGames();
+    final gamesToUpdate = storedGames.isNotEmpty ? storedGames : currentGames;
+
+    final updatedGames = gamesToUpdate.map((g) => g.id == game.id ? game : g).toList();
+    final success = await _storage.saveGames(updatedGames);
+
+    if (success) {
+      updatedGames.sort((a, b) => b.date.compareTo(a.date));
+      state = AsyncValue.data(updatedGames);
+    }
+    return success;
+  }
 }
 
 // Statistics Provider
