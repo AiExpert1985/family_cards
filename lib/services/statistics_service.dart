@@ -55,9 +55,14 @@ class StatisticsService {
       final stats = _calculateStats(players: players, games: gamesUpToDate);
       if (stats.isEmpty) continue;
 
-      if (stats.first.played > 0) {
-        cupCount[stats.first.playerId] = (cupCount[stats.first.playerId] ?? 0) + 1;
-        cupDates[stats.first.playerId]!.add(cupDate);
+      final maxWinRate = stats.first.winRate;
+      for (var stat in stats) {
+        if (stat.winRate == maxWinRate && stat.played > 0) {
+          cupCount[stat.playerId] = (cupCount[stat.playerId] ?? 0) + 1;
+          cupDates[stat.playerId]!.add(cupDate);
+        } else {
+          break;
+        }
       }
     }
 
