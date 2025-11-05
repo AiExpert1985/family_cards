@@ -323,12 +323,14 @@ class StatisticsPage extends ConsumerWidget {
                     stat.firstPlaceCount,
                     (index) {
                       final date = stat.cupDates[index];
+                      final dateKey = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+                      final isShared = stat.sharedCupDates.contains(dateKey);
                       return Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.emoji_events,
-                            color: Colors.amber,
+                            color: isShared ? Colors.brown : Colors.amber,
                             size: 20,
                           ),
                           Text(

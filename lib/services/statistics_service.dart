@@ -25,9 +25,12 @@ class StatisticsService {
 
     final cupCount = <String, int>{};
     final cupDates = <String, List<DateTime>>{};
+    final sharedCupDates = <String, Set<String>>{}; // Track which dates had shared cups
+
     for (var player in players) {
       cupCount[player.id] = 0;
       cupDates[player.id] = [];
+      sharedCupDates[player.id] = {};
     }
 
     final sortedGames = List<Game>.from(games)..sort((a, b) => a.date.compareTo(b.date));
@@ -56,12 +59,21 @@ class StatisticsService {
       if (stats.isEmpty) continue;
 
       final maxWinRate = stats.first.winRate;
+      final winners = <String>[];
       for (var stat in stats) {
         if (stat.winRate == maxWinRate && stat.played > 0) {
+          winners.add(stat.playerId);
           cupCount[stat.playerId] = (cupCount[stat.playerId] ?? 0) + 1;
           cupDates[stat.playerId]!.add(cupDate);
         } else {
           break;
+        }
+      }
+
+      // Mark as shared if multiple winners
+      if (winners.length > 1) {
+        for (var playerId in winners) {
+          sharedCupDates[playerId]!.add(dateKey);
         }
       }
     }
@@ -72,8 +84,9 @@ class StatisticsService {
               name: p.name,
               firstPlaceCount: cupCount[p.id] ?? 0,
               cupDates: cupDates[p.id] ?? [],
+              sharedCupDates: sharedCupDates[p.id] ?? {},
             ))
-        .where((s) => s.firstPlaceCount > 1)
+        .where((s) => s.firstPlaceCount > 0)
         .toList()
       ..sort((a, b) => b.firstPlaceCount.compareTo(a.firstPlaceCount));
   }
