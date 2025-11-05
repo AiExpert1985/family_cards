@@ -39,10 +39,12 @@ class FirstPlaceStats {
   final String playerId;
   final String name;
   final int firstPlaceCount;
+  final List<DateTime> cupDates;
 
   const FirstPlaceStats({
     required this.playerId,
     required this.name,
     required this.firstPlaceCount,
+    required this.cupDates,
   });
 }

@@ -24,8 +24,10 @@ class StatisticsService {
     if (players.isEmpty || games.isEmpty) return [];
 
     final cupCount = <String, int>{};
+    final cupDates = <String, List<DateTime>>{};
     for (var player in players) {
       cupCount[player.id] = 0;
+      cupDates[player.id] = [];
     }
 
     final sortedGames = List<Game>.from(games)..sort((a, b) => a.date.compareTo(b.date));
@@ -38,19 +40,24 @@ class StatisticsService {
 
     for (var dateKey in uniqueDates) {
       final gamesUpToDate = <Game>[];
+      DateTime? cupDate;
       for (var game in sortedGames) {
         if (_getDateKey(game.date).compareTo(dateKey) <= 0) {
           gamesUpToDate.add(game);
+          if (_getDateKey(game.date) == dateKey && cupDate == null) {
+            cupDate = game.date;
+          }
         }
       }
 
-      if (gamesUpToDate.isEmpty) continue;
+      if (gamesUpToDate.isEmpty || cupDate == null) continue;
 
       final stats = _calculateStats(players: players, games: gamesUpToDate);
       if (stats.isEmpty) continue;
 
       if (stats.first.played > 0) {
         cupCount[stats.first.playerId] = (cupCount[stats.first.playerId] ?? 0) + 1;
+        cupDates[stats.first.playerId]!.add(cupDate);
       }
     }
 
@@ -59,6 +66,7 @@ class StatisticsService {
               playerId: p.id,
               name: p.name,
               firstPlaceCount: cupCount[p.id] ?? 0,
+              cupDates: cupDates[p.id] ?? [],
             ))
         .where((s) => s.firstPlaceCount > 1)
         .toList()

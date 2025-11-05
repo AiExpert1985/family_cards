@@ -317,15 +317,36 @@ class StatisticsPage extends ConsumerWidget {
                 flex: 3,
                 child: Wrap(
                   alignment: WrapAlignment.center,
-                  spacing: 4,
-                  runSpacing: 4,
+                  spacing: 8,
+                  runSpacing: 8,
                   children: List.generate(
                     stat.firstPlaceCount,
-                    (index) => const Icon(
-                      Icons.emoji_events,
-                      color: Colors.amber,
-                      size: 20,
-                    ),
+                    (index) {
+                      final date = stat.cupDates[index];
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.emoji_events,
+                            color: Colors.amber,
+                            size: 20,
+                          ),
+                          Text(
+                            '${date.day}/${date.month}',
+                            style: const TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            '${date.year}',
+                            style: const TextStyle(
+                              fontSize: 8,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
