@@ -180,7 +180,7 @@ class StatisticsService {
 
   String _getDateKey(DateTime date) {
     final local = date.toLocal();
-    return '${local.year}-${local.month}-${local.day}';
+    return '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
   }
 
   void _incrementPlayed(Map<String, _StatsAccumulator> map, String playerId) {
