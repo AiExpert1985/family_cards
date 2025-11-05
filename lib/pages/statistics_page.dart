@@ -17,7 +17,7 @@ class StatisticsPage extends ConsumerWidget {
     final selectedDate = ref.watch(selectedStatisticsDateProvider);
 
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('الإحصائيات'),
@@ -25,7 +25,7 @@ class StatisticsPage extends ConsumerWidget {
           foregroundColor: Colors.white,
           bottom: const TabBar(
             labelColor: Colors.amber,
-            tabs: [Tab(text: 'عام'), Tab(text: 'يومي'), Tab(text: 'لاعبين')],
+            tabs: [Tab(text: 'عام'), Tab(text: 'يومي'), Tab(text: 'لاعبين'), Tab(text: 'الابطال')],
           ),
         ),
         body: TabBarView(
@@ -40,6 +40,7 @@ class StatisticsPage extends ConsumerWidget {
               header: _buildDateSelector(context, ref, selectedDate),
             ),
             _buildHeadToHeadTab(context, ref),
+            _buildFirstPlaceTab(context, ref),
           ],
         ),
       ),
@@ -232,6 +233,144 @@ class StatisticsPage extends ConsumerWidget {
           (error, _) => Center(
             child: Text('حدث خطأ أثناء جلب اللاعبين: ${error.toString()}'),
           ),
+    );
+  }
+
+  Widget _buildFirstPlaceTab(BuildContext context, WidgetRef ref) {
+    final playersAsync = ref.watch(playersProvider);
+    final gamesAsync = ref.watch(gamesProvider);
+
+    return playersAsync.when(
+      data: (players) {
+        if (players.isEmpty) {
+          return Center(
+            child: EmptyState(
+              icon: Icons.emoji_events,
+              message: 'لا يوجد لاعبون.',
+            ),
+          );
+        }
+
+        return gamesAsync.when(
+          data: (games) {
+            final statsService = ref.watch(statisticsServiceProvider);
+            final firstPlaceStats = statsService.calculateFirstPlaceStats(
+              players: players,
+              games: games,
+            );
+
+            if (firstPlaceStats.isEmpty) {
+              return Center(
+                child: EmptyState(
+                  icon: Icons.emoji_events,
+                  message: 'لا توجد إحصائيات.',
+                ),
+              );
+            }
+
+            return ListView.builder(
+              itemCount: firstPlaceStats.length,
+              padding: const EdgeInsets.all(8),
+              itemBuilder: (context, index) {
+                final stat = firstPlaceStats[index];
+                return _buildFirstPlaceCard(stat);
+              },
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error:
+              (error, _) => Center(
+                child: Text('حدث خطأ: ${error.toString()}'),
+              ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error:
+          (error, _) => Center(
+            child: Text('حدث خطأ: ${error.toString()}'),
+          ),
+    );
+  }
+
+  Card _buildFirstPlaceCard(FirstPlaceStats stat) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: Text(
+                  stat.name,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 3,
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: List.generate(
+                    stat.firstPlaceCount,
+                    (index) {
+                      final date = stat.cupDates[index];
+                      final dateKey = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+                      final isShared = stat.sharedCupDates.contains(dateKey);
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.emoji_events,
+                            color: isShared ? Colors.brown : Colors.amber,
+                            size: 20,
+                          ),
+                          Text(
+                            '${date.day}/${date.month}',
+                            style: const TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            '${date.year}',
+                            style: const TextStyle(
+                              fontSize: 8,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.amber,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${stat.firstPlaceCount}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

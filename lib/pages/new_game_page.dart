@@ -13,6 +13,7 @@ class NewGamePage extends ConsumerStatefulWidget {
   final String? prefilledTeam1Player2;
   final String? prefilledTeam2Player1;
   final String? prefilledTeam2Player2;
+  final Game? gameToEdit;
 
   const NewGamePage({
     super.key,
@@ -20,6 +21,7 @@ class NewGamePage extends ConsumerStatefulWidget {
     this.prefilledTeam1Player2,
     this.prefilledTeam2Player1,
     this.prefilledTeam2Player2,
+    this.gameToEdit,
   });
 
   @override
@@ -31,15 +33,44 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
   bool isKonkan = false;
   bool _isSaving = false;
   DateTime _selectedDate = DateTime.now();
+  int? _winningTeam;
 
   @override
   void initState() {
     super.initState();
-    // Initialize with prefilled values if provided
-    t1p1 = widget.prefilledTeam1Player1;
-    t1p2 = widget.prefilledTeam1Player2;
-    t2p1 = widget.prefilledTeam2Player1;
-    t2p2 = widget.prefilledTeam2Player2;
+    if (widget.gameToEdit != null) {
+      final game = widget.gameToEdit!;
+      t1p1 = game.team1Player1;
+      t1p2 = game.team1Player2;
+      t2p1 = game.team2Player1;
+      t2p2 = game.team2Player2;
+      isKonkan = game.isKonkan;
+      _selectedDate = game.date;
+      _winningTeam = game.winningTeam;
+    } else {
+      t1p1 = widget.prefilledTeam1Player1;
+      t1p2 = widget.prefilledTeam1Player2;
+      t2p1 = widget.prefilledTeam2Player1;
+      t2p2 = widget.prefilledTeam2Player2;
+    }
+  }
+
+  Future<void> _autoSave() async {
+    if (widget.gameToEdit == null) return;
+    if (t1p1 == null || t1p2 == null || t2p1 == null || t2p2 == null || _winningTeam == null) return;
+
+    final game = Game(
+      id: widget.gameToEdit!.id,
+      date: _selectedDate,
+      team1Player1: t1p1!,
+      team1Player2: t1p2!,
+      team2Player1: t2p1!,
+      team2Player2: t2p2!,
+      winningTeam: _winningTeam!,
+      isKonkan: isKonkan,
+    );
+
+    await ref.read(gamesProvider.notifier).updateGame(game);
   }
 
   Future<void> _pickDate() async {
@@ -71,6 +102,7 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
         currentTime.microsecond,
       );
     });
+    _autoSave();
   }
 
   Future<void> _saveGame(int winningTeam) async {
@@ -86,10 +118,13 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
       return;
     }
 
-    setState(() => _isSaving = true);
+    setState(() {
+      _isSaving = true;
+      _winningTeam = winningTeam;
+    });
 
     final game = Game(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.gameToEdit?.id ?? '${DateTime.now().millisecondsSinceEpoch}-${DateTime.now().microsecond}',
       date: _selectedDate,
       team1Player1: t1p1!,
       team1Player2: t1p2!,
@@ -99,29 +134,33 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
       isKonkan: isKonkan,
     );
 
-    final success = await ref.read(gamesProvider.notifier).addGame(game);
+    final isEdit = widget.gameToEdit != null;
+    final success = isEdit
+        ? await ref.read(gamesProvider.notifier).updateGame(game)
+        : await ref.read(gamesProvider.notifier).addGame(game);
 
     if (!mounted) return;
 
     setState(() => _isSaving = false);
 
     if (success) {
-      // Remove this specific match from saved teams
-      final wasPreFilled = widget.prefilledTeam1Player1 != null;
-      if (wasPreFilled) {
-        final storage = ref.read(storageServiceProvider);
-        await storage.removePlayedMatch(
-          team1Player1: t1p1!,
-          team1Player2: t1p2!,
-          team2Player1: t2p1!,
-          team2Player2: t2p2!,
-        );
+      if (!isEdit) {
+        final wasPreFilled = widget.prefilledTeam1Player1 != null;
+        if (wasPreFilled) {
+          final storage = ref.read(storageServiceProvider);
+          await storage.removePlayedMatch(
+            team1Player1: t1p1!,
+            team1Player2: t1p2!,
+            team2Player1: t2p1!,
+            team2Player2: t2p2!,
+          );
+        }
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم حفظ اللعبة بنجاح'),
+          SnackBar(
+            content: Text(isEdit ? 'تم تحديث المباراة بنجاح' : 'تم حفظ اللعبة بنجاح'),
             backgroundColor: Colors.green,
           ),
         );
@@ -136,7 +175,7 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('لعبة جديدة'),
+        title: Text(widget.gameToEdit != null ? 'تعديل المباراة' : 'لعبة جديدة'),
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
       ),
@@ -162,8 +201,14 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
                       players: players,
                       player1: t1p1,
                       player2: t1p2,
-                      onPlayer1Changed: (v) => setState(() => t1p1 = v),
-                      onPlayer2Changed: (v) => setState(() => t1p2 = v),
+                      onPlayer1Changed: (v) {
+                        setState(() => t1p1 = v);
+                        _autoSave();
+                      },
+                      onPlayer2Changed: (v) {
+                        setState(() => t1p2 = v);
+                        _autoSave();
+                      },
                     ),
                     const SizedBox(height: 20),
                     _TeamCard(
@@ -172,8 +217,14 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
                       players: players,
                       player1: t2p1,
                       player2: t2p2,
-                      onPlayer1Changed: (v) => setState(() => t2p1 = v),
-                      onPlayer2Changed: (v) => setState(() => t2p2 = v),
+                      onPlayer1Changed: (v) {
+                        setState(() => t2p1 = v);
+                        _autoSave();
+                      },
+                      onPlayer2Changed: (v) {
+                        setState(() => t2p2 = v);
+                        _autoSave();
+                      },
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -215,11 +266,12 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
                                 ),
                               ),
                               value: isKonkan,
-                              onChanged:
-                                  _isSaving
-                                      ? null
-                                      : (value) =>
-                                          setState(() => isKonkan = value),
+                              onChanged: _isSaving
+                                  ? null
+                                  : (value) {
+                                      setState(() => isKonkan = value);
+                                      _autoSave();
+                                    },
                             ),
                           ),
                         ),
@@ -243,8 +295,16 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
                             children: [
                               Expanded(
                                 child: ElevatedButton(
-                                  onPressed:
-                                      _isSaving ? null : () => _saveGame(2),
+                                  onPressed: _isSaving
+                                      ? null
+                                      : () {
+                                          if (widget.gameToEdit != null) {
+                                            setState(() => _winningTeam = 2);
+                                            _autoSave();
+                                          } else {
+                                            _saveGame(2);
+                                          }
+                                        },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,
                                     foregroundColor: Colors.white,
@@ -268,8 +328,16 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: ElevatedButton(
-                                  onPressed:
-                                      _isSaving ? null : () => _saveGame(1),
+                                  onPressed: _isSaving
+                                      ? null
+                                      : () {
+                                          if (widget.gameToEdit != null) {
+                                            setState(() => _winningTeam = 1);
+                                            _autoSave();
+                                          } else {
+                                            _saveGame(1);
+                                          }
+                                        },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.blue,
                                     foregroundColor: Colors.white,

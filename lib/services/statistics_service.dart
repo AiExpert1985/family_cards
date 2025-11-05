@@ -17,6 +17,80 @@ class StatisticsService {
     return _calculateStats(players: players, games: filteredGames);
   }
 
+  List<FirstPlaceStats> calculateFirstPlaceStats({
+    required List<Player> players,
+    required List<Game> games,
+  }) {
+    if (players.isEmpty || games.isEmpty) return [];
+
+    final cupCount = <String, int>{};
+    final cupDates = <String, List<DateTime>>{};
+    final sharedCupDates = <String, Set<String>>{}; // Track which dates had shared cups
+
+    for (var player in players) {
+      cupCount[player.id] = 0;
+      cupDates[player.id] = [];
+      sharedCupDates[player.id] = {};
+    }
+
+    final sortedGames = List<Game>.from(games)..sort((a, b) => a.date.compareTo(b.date));
+
+    final uniqueDatesSet = <String>{};
+    for (var game in sortedGames) {
+      uniqueDatesSet.add(_getDateKey(game.date));
+    }
+    final uniqueDates = uniqueDatesSet.toList()..sort();
+
+    for (var dateKey in uniqueDates) {
+      final gamesUpToDate = <Game>[];
+      DateTime? cupDate;
+      for (var game in sortedGames) {
+        if (_getDateKey(game.date).compareTo(dateKey) <= 0) {
+          gamesUpToDate.add(game);
+          if (_getDateKey(game.date) == dateKey && cupDate == null) {
+            cupDate = game.date;
+          }
+        }
+      }
+
+      if (gamesUpToDate.isEmpty || cupDate == null) continue;
+
+      final stats = _calculateStats(players: players, games: gamesUpToDate);
+      if (stats.isEmpty) continue;
+
+      final maxWinRateRounded = stats.first.winRate.round();
+      final winners = <String>[];
+      for (var stat in stats) {
+        if (stat.winRate.round() == maxWinRateRounded && stat.played > 0) {
+          winners.add(stat.playerId);
+          cupCount[stat.playerId] = (cupCount[stat.playerId] ?? 0) + 1;
+          cupDates[stat.playerId]!.add(cupDate);
+        } else {
+          break;
+        }
+      }
+
+      // Mark as shared if multiple winners
+      if (winners.length > 1) {
+        for (var playerId in winners) {
+          sharedCupDates[playerId]!.add(dateKey);
+        }
+      }
+    }
+
+    return players
+        .map((p) => FirstPlaceStats(
+              playerId: p.id,
+              name: p.name,
+              firstPlaceCount: cupCount[p.id] ?? 0,
+              cupDates: cupDates[p.id] ?? [],
+              sharedCupDates: sharedCupDates[p.id] ?? {},
+            ))
+        .where((s) => s.firstPlaceCount > 0)
+        .toList()
+      ..sort((a, b) => b.firstPlaceCount.compareTo(a.firstPlaceCount));
+  }
+
   List<HeadToHeadStat> calculateHeadToHeadStats({
     required String playerId,
     required List<Player> players,
@@ -134,6 +208,11 @@ class StatisticsService {
     final localA = a.toLocal();
     final localB = b.toLocal();
     return localA.year == localB.year && localA.month == localB.month && localA.day == localB.day;
+  }
+
+  String _getDateKey(DateTime date) {
+    final local = date.toLocal();
+    return '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
   }
 
   void _incrementPlayed(Map<String, _StatsAccumulator> map, String playerId) {

@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/providers.dart';
 import '../models/player.dart';
+import '../models/game.dart';
+import 'new_game_page.dart';
 
 class GamesHistoryPage extends ConsumerStatefulWidget {
   const GamesHistoryPage({super.key});
@@ -220,6 +222,20 @@ class _GamesHistoryPageState extends ConsumerState<GamesHistoryPage> {
                                   ],
                                   Row(
                                     children: [
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.edit,
+                                          color: Colors.blue,
+                                        ),
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => NewGamePage(gameToEdit: game),
+                                            ),
+                                          );
+                                        },
+                                      ),
                                       IconButton(
                                         icon: const Icon(
                                           Icons.delete,

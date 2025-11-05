@@ -34,3 +34,19 @@ class HeadToHeadStat {
   double get winRate => played > 0 ? (won / played * 100) : 0;
   String get winRateText => '${winRate.toStringAsFixed(0)}%';
 }
+
+class FirstPlaceStats {
+  final String playerId;
+  final String name;
+  final int firstPlaceCount;
+  final List<DateTime> cupDates;
+  final Set<String> sharedCupDates;
+
+  const FirstPlaceStats({
+    required this.playerId,
+    required this.name,
+    required this.firstPlaceCount,
+    required this.cupDates,
+    required this.sharedCupDates,
+  });
+}
