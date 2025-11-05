@@ -30,18 +30,18 @@ class StatisticsService {
       firstPlaceCount[player.id] = 0;
     }
 
-    final gamesByDate = <String, List<Game>>{};
+    final gamesByWeek = <String, List<Game>>{};
     for (var game in games) {
-      final dateKey = _getDateKey(game.date);
-      gamesByDate.putIfAbsent(dateKey, () => []).add(game);
+      final weekKey = _getTuesdayWeekKey(game.date);
+      gamesByWeek.putIfAbsent(weekKey, () => []).add(game);
     }
 
-    for (var dateGames in gamesByDate.values) {
-      final dailyStats = _calculateStats(players: players, games: dateGames);
-      if (dailyStats.isEmpty) continue;
+    for (var weekGames in gamesByWeek.values) {
+      final weekStats = _calculateStats(players: players, games: weekGames);
+      if (weekStats.isEmpty) continue;
 
-      final maxWinRate = dailyStats.first.winRate;
-      for (var stat in dailyStats) {
+      final maxWinRate = weekStats.first.winRate;
+      for (var stat in weekStats) {
         if (stat.winRate == maxWinRate && stat.played > 0) {
           firstPlaceCount[stat.playerId] = (firstPlaceCount[stat.playerId] ?? 0) + 1;
         } else {
@@ -184,6 +184,14 @@ class StatisticsService {
   String _getDateKey(DateTime date) {
     final local = date.toLocal();
     return '${local.year}-${local.month}-${local.day}';
+  }
+
+  String _getTuesdayWeekKey(DateTime date) {
+    final local = date.toLocal();
+    final weekday = local.weekday;
+    final daysToAdd = (2 - weekday + 7) % 7;
+    final tuesday = local.add(Duration(days: daysToAdd));
+    return '${tuesday.year}-${tuesday.month}-${tuesday.day}';
   }
 
   void _incrementPlayed(Map<String, _StatsAccumulator> map, String playerId) {

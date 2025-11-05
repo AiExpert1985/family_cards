@@ -298,51 +298,54 @@ class StatisticsPage extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: Text(
-                stat.name,
-                textAlign: TextAlign.right,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 3,
-              child: Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 4,
-                runSpacing: 4,
-                children: List.generate(
-                  stat.firstPlaceCount,
-                  (index) => const Icon(
-                    Icons.emoji_events,
-                    color: Colors.amber,
-                    size: 20,
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: Text(
+                  stat.name,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.amber,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${stat.firstPlaceCount}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+              Expanded(
+                flex: 3,
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: List.generate(
+                    stat.firstPlaceCount,
+                    (index) => const Icon(
+                      Icons.emoji_events,
+                      color: Colors.amber,
+                      size: 20,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.amber,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${stat.firstPlaceCount}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
