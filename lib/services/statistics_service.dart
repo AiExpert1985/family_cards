@@ -17,6 +17,51 @@ class StatisticsService {
     return _calculateStats(players: players, games: filteredGames);
   }
 
+  List<FirstPlaceStats> calculateFirstPlaceStats({
+    required List<Player> players,
+    required List<Game> games,
+  }) {
+    if (players.isEmpty || games.isEmpty) {
+      return players.map((p) => FirstPlaceStats(playerId: p.id, name: p.name, firstPlaceCount: 0)).toList();
+    }
+
+    final firstPlaceCount = <String, int>{};
+    for (var player in players) {
+      firstPlaceCount[player.id] = 0;
+    }
+
+    final gamesByDate = <String, List<Game>>{};
+    for (var game in games) {
+      final dateKey = _getDateKey(game.date);
+      gamesByDate.putIfAbsent(dateKey, () => []).add(game);
+    }
+
+    for (var dateGames in gamesByDate.values) {
+      final dailyStats = _calculateStats(players: players, games: dateGames);
+      if (dailyStats.isEmpty) continue;
+
+      final maxWinRate = dailyStats.first.winRate;
+      for (var stat in dailyStats) {
+        if (stat.winRate == maxWinRate && stat.played > 0) {
+          firstPlaceCount[stat.playerId] = (firstPlaceCount[stat.playerId] ?? 0) + 1;
+        } else {
+          break;
+        }
+      }
+    }
+
+    final stats = players
+        .map((p) => FirstPlaceStats(
+              playerId: p.id,
+              name: p.name,
+              firstPlaceCount: firstPlaceCount[p.id] ?? 0,
+            ))
+        .toList()
+      ..sort((a, b) => b.firstPlaceCount.compareTo(a.firstPlaceCount));
+
+    return stats;
+  }
+
   List<HeadToHeadStat> calculateHeadToHeadStats({
     required String playerId,
     required List<Player> players,
@@ -134,6 +179,11 @@ class StatisticsService {
     final localA = a.toLocal();
     final localB = b.toLocal();
     return localA.year == localB.year && localA.month == localB.month && localA.day == localB.day;
+  }
+
+  String _getDateKey(DateTime date) {
+    final local = date.toLocal();
+    return '${local.year}-${local.month}-${local.day}';
   }
 
   void _incrementPlayed(Map<String, _StatsAccumulator> map, String playerId) {
