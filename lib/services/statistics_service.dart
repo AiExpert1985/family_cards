@@ -29,13 +29,13 @@ class StatisticsService {
     }
 
     final sortedGames = List<Game>.from(games)..sort((a, b) => a.date.compareTo(b.date));
-    final mondays = _getMondays(sortedGames.first.date, DateTime.now());
+    final uniqueDates = sortedGames.map((g) => _getDateKey(g.date)).toSet().toList()..sort();
 
-    for (var monday in mondays) {
-      final gamesUpToMonday = sortedGames.where((g) => !g.date.isAfter(monday)).toList();
-      if (gamesUpToMonday.isEmpty) continue;
+    for (var dateKey in uniqueDates) {
+      final gamesUpToDate = sortedGames.where((g) => _getDateKey(g.date).compareTo(dateKey) <= 0).toList();
+      if (gamesUpToDate.isEmpty) continue;
 
-      final stats = _calculateStats(players: players, games: gamesUpToMonday);
+      final stats = _calculateStats(players: players, games: gamesUpToDate);
       if (stats.isEmpty) continue;
 
       final maxWinRate = stats.first.winRate;
@@ -181,23 +181,6 @@ class StatisticsService {
   String _getDateKey(DateTime date) {
     final local = date.toLocal();
     return '${local.year}-${local.month}-${local.day}';
-  }
-
-  List<DateTime> _getMondays(DateTime start, DateTime end) {
-    final mondays = <DateTime>[];
-    var current = start.toLocal();
-
-    while (current.weekday != DateTime.monday) {
-      current = current.add(const Duration(days: 1));
-      if (current.isAfter(end)) return mondays;
-    }
-
-    while (!current.isAfter(end)) {
-      mondays.add(DateTime(current.year, current.month, current.day));
-      current = current.add(const Duration(days: 7));
-    }
-
-    return mondays;
   }
 
   void _incrementPlayed(Map<String, _StatsAccumulator> map, String playerId) {
