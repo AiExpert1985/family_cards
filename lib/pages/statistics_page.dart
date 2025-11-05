@@ -25,7 +25,7 @@ class StatisticsPage extends ConsumerWidget {
           foregroundColor: Colors.white,
           bottom: const TabBar(
             labelColor: Colors.amber,
-            tabs: [Tab(text: 'عام'), Tab(text: 'يومي'), Tab(text: 'لاعبين'), Tab(text: 'المركز الأول')],
+            tabs: [Tab(text: 'عام'), Tab(text: 'يومي'), Tab(text: 'لاعبين'), Tab(text: 'الابطال')],
           ),
         ),
         body: TabBarView(

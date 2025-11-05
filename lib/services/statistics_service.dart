@@ -21,45 +21,42 @@ class StatisticsService {
     required List<Player> players,
     required List<Game> games,
   }) {
-    if (players.isEmpty || games.isEmpty) {
-      return players.map((p) => FirstPlaceStats(playerId: p.id, name: p.name, firstPlaceCount: 0)).toList();
-    }
+    if (players.isEmpty || games.isEmpty) return [];
 
-    final firstPlaceCount = <String, int>{};
+    final cupCount = <String, int>{};
     for (var player in players) {
-      firstPlaceCount[player.id] = 0;
+      cupCount[player.id] = 0;
     }
 
-    final gamesByWeek = <String, List<Game>>{};
-    for (var game in games) {
-      final weekKey = _getTuesdayWeekKey(game.date);
-      gamesByWeek.putIfAbsent(weekKey, () => []).add(game);
-    }
+    final sortedGames = List<Game>.from(games)..sort((a, b) => a.date.compareTo(b.date));
+    final mondays = _getMondays(sortedGames.first.date, DateTime.now());
 
-    for (var weekGames in gamesByWeek.values) {
-      final weekStats = _calculateStats(players: players, games: weekGames);
-      if (weekStats.isEmpty) continue;
+    for (var monday in mondays) {
+      final gamesUpToMonday = sortedGames.where((g) => !g.date.isAfter(monday)).toList();
+      if (gamesUpToMonday.isEmpty) continue;
 
-      final maxWinRate = weekStats.first.winRate;
-      for (var stat in weekStats) {
+      final stats = _calculateStats(players: players, games: gamesUpToMonday);
+      if (stats.isEmpty) continue;
+
+      final maxWinRate = stats.first.winRate;
+      for (var stat in stats) {
         if (stat.winRate == maxWinRate && stat.played > 0) {
-          firstPlaceCount[stat.playerId] = (firstPlaceCount[stat.playerId] ?? 0) + 1;
+          cupCount[stat.playerId] = (cupCount[stat.playerId] ?? 0) + 1;
         } else {
           break;
         }
       }
     }
 
-    final stats = players
+    return players
         .map((p) => FirstPlaceStats(
               playerId: p.id,
               name: p.name,
-              firstPlaceCount: firstPlaceCount[p.id] ?? 0,
+              firstPlaceCount: cupCount[p.id] ?? 0,
             ))
+        .where((s) => s.firstPlaceCount > 1)
         .toList()
       ..sort((a, b) => b.firstPlaceCount.compareTo(a.firstPlaceCount));
-
-    return stats;
   }
 
   List<HeadToHeadStat> calculateHeadToHeadStats({
@@ -186,12 +183,21 @@ class StatisticsService {
     return '${local.year}-${local.month}-${local.day}';
   }
 
-  String _getTuesdayWeekKey(DateTime date) {
-    final local = date.toLocal();
-    final weekday = local.weekday;
-    final daysToAdd = (2 - weekday + 7) % 7;
-    final tuesday = local.add(Duration(days: daysToAdd));
-    return '${tuesday.year}-${tuesday.month}-${tuesday.day}';
+  List<DateTime> _getMondays(DateTime start, DateTime end) {
+    final mondays = <DateTime>[];
+    var current = start.toLocal();
+
+    while (current.weekday != DateTime.monday) {
+      current = current.add(const Duration(days: 1));
+      if (current.isAfter(end)) return mondays;
+    }
+
+    while (!current.isAfter(end)) {
+      mondays.add(DateTime(current.year, current.month, current.day));
+      current = current.add(const Duration(days: 7));
+    }
+
+    return mondays;
   }
 
   void _incrementPlayed(Map<String, _StatsAccumulator> map, String playerId) {
