@@ -58,10 +58,10 @@ class StatisticsService {
       final stats = _calculateStats(players: players, games: gamesUpToDate);
       if (stats.isEmpty) continue;
 
-      final maxWinRate = stats.first.winRate;
+      final maxWinRateRounded = stats.first.winRate.round();
       final winners = <String>[];
       for (var stat in stats) {
-        if (stat.winRate == maxWinRate && stat.played > 0) {
+        if (stat.winRate.round() == maxWinRateRounded && stat.played > 0) {
           winners.add(stat.playerId);
           cupCount[stat.playerId] = (cupCount[stat.playerId] ?? 0) + 1;
           cupDates[stat.playerId]!.add(cupDate);
