@@ -124,7 +124,7 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
     });
 
     final game = Game(
-      id: widget.gameToEdit?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.gameToEdit?.id ?? '${DateTime.now().millisecondsSinceEpoch}-${DateTime.now().microsecond}',
       date: _selectedDate,
       team1Player1: t1p1!,
       team1Player2: t1p2!,

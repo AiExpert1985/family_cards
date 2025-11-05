@@ -29,22 +29,28 @@ class StatisticsService {
     }
 
     final sortedGames = List<Game>.from(games)..sort((a, b) => a.date.compareTo(b.date));
-    final uniqueDates = sortedGames.map((g) => _getDateKey(g.date)).toSet().toList()..sort();
+
+    final uniqueDatesSet = <String>{};
+    for (var game in sortedGames) {
+      uniqueDatesSet.add(_getDateKey(game.date));
+    }
+    final uniqueDates = uniqueDatesSet.toList()..sort();
 
     for (var dateKey in uniqueDates) {
-      final gamesUpToDate = sortedGames.where((g) => _getDateKey(g.date).compareTo(dateKey) <= 0).toList();
+      final gamesUpToDate = <Game>[];
+      for (var game in sortedGames) {
+        if (_getDateKey(game.date).compareTo(dateKey) <= 0) {
+          gamesUpToDate.add(game);
+        }
+      }
+
       if (gamesUpToDate.isEmpty) continue;
 
       final stats = _calculateStats(players: players, games: gamesUpToDate);
       if (stats.isEmpty) continue;
 
-      final maxWinRate = stats.first.winRate;
-      for (var stat in stats) {
-        if (stat.winRate == maxWinRate && stat.played > 0) {
-          cupCount[stat.playerId] = (cupCount[stat.playerId] ?? 0) + 1;
-        } else {
-          break;
-        }
+      if (stats.first.played > 0) {
+        cupCount[stats.first.playerId] = (cupCount[stats.first.playerId] ?? 0) + 1;
       }
     }
 
