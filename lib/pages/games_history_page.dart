@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/providers.dart';
 import '../models/player.dart';
-import '../models/game.dart';
 import 'new_game_page.dart';
 
 class GamesHistoryPage extends ConsumerStatefulWidget {
@@ -231,7 +230,10 @@ class _GamesHistoryPageState extends ConsumerState<GamesHistoryPage> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) => NewGamePage(gameToEdit: game),
+                                              builder:
+                                                  (context) => NewGamePage(
+                                                    gameToEdit: game,
+                                                  ),
                                             ),
                                           );
                                         },
