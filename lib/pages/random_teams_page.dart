@@ -241,6 +241,45 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
     }
   }
 
+  Future<void> _resetAllPairings() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('إعادة تعيين الفرق'),
+        content: const Text('هل تريد مسح سجل الفرق لهذا اليوم؟\nسيتمكن جميع اللاعبين من اللعب معاً مرة أخرى.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('إعادة تعيين'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final players = ref.read(playersProvider).value ?? [];
+      final resetPlayers = players.map((p) => p.copyWith(pairedWithToday: [])).toList();
+      await ref.read(playersProvider.notifier).updatePlayers(resetPlayers);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم إعادة تعيين سجل الفرق'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final selectedAsync = ref.watch(selectedPlayersProvider);
@@ -252,6 +291,13 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
         title: const Text('تكوين فرق عشوائية'),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'إعادة تعيين سجل الفرق',
+            onPressed: _resetAllPairings,
+          ),
+        ],
       ),
       body: Column(
         children: [

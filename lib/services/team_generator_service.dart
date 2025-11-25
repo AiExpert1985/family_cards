@@ -105,7 +105,8 @@ class TeamGeneratorService {
       if (team.length == 2) {
         final player1 = team[0];
         final player2 = team[1];
-        if (player1.pairedWithToday.contains(player2.id)) {
+        if (player1.pairedWithToday.contains(player2.id) ||
+            player2.pairedWithToday.contains(player1.id)) {
           return true;
         }
       }
