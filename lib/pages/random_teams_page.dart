@@ -25,10 +25,26 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await ref.read(playersProvider.notifier).loadPlayers();
+      await _checkAndResetPairings();
       await ref.read(selectedPlayersProvider.notifier).loadSelectedPlayers();
       await ref.read(restedPlayersProvider.notifier).loadRestedPlayers();
       await _loadLastResult();
     });
+  }
+
+  Future<void> _checkAndResetPairings() async {
+    final storage = ref.read(storageServiceProvider);
+    final shouldReset = await storage.shouldResetPairings();
+
+    if (shouldReset) {
+      final players = ref.read(playersProvider).value ?? [];
+      final resetPlayers = players.map((p) => p.copyWith(pairedWithToday: [])).toList();
+      await ref.read(playersProvider.notifier).updatePlayers(resetPlayers);
+
+      final today = DateTime.now();
+      final todayString = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      await storage.saveLastPairingResetDate(todayString);
+    }
   }
 
   Future<void> _loadLastResult() async {
@@ -141,6 +157,10 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       }
 
       await ref.read(restedPlayersProvider.notifier).updateRested(newRestedIds);
+
+      if (result.updatedPlayers.isNotEmpty) {
+        await ref.read(playersProvider.notifier).updatePlayers(result.updatedPlayers);
+      }
     }
 
     setState(() {

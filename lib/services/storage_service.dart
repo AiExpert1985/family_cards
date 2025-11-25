@@ -10,6 +10,7 @@ class StorageService {
   static const String _selectedPlayersKey = 'selectedPlayers';
   static const String _restedPlayersKey = 'restedPlayers';
   static const String _lastSelectedKey = 'lastSelectedPlayersCheck';
+  static const String _lastPairingResetDateKey = 'lastPairingResetDate';
 
   // Players
   Future<List<Player>> getPlayers() async {
@@ -201,5 +202,28 @@ class StorageService {
     } catch (e) {
       return false;
     }
+  }
+
+  // Pairing reset date tracking
+  Future<String?> getLastPairingResetDate() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_lastPairingResetDateKey);
+  }
+
+  Future<bool> saveLastPairingResetDate(String date) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_lastPairingResetDateKey, date);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> shouldResetPairings() async {
+    final lastResetDate = await getLastPairingResetDate();
+    final today = DateTime.now();
+    final todayString = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    return lastResetDate != todayString;
   }
 }
