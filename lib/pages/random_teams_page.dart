@@ -1,4 +1,6 @@
 // ============== pages/random_teams_page.dart ==============
+import 'dart:math';
+
 import 'package:family_cards/pages/new_game_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -130,7 +132,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
     );
 
     TeamGenerationResult? validResult;
-    const maxAttempts = 20;
+    const maxAttempts = 200;
 
     for (var attempt = 0; attempt < maxAttempts; attempt++) {
       if (attempt > 0) {
@@ -155,6 +157,22 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
         break;
       }
 
+      if (!cycleComplete) {
+        final alternateTeams = _buildNonRepeatingTeams(
+          _flattenTeams(lastAttempt.teams),
+          teamHistory,
+        );
+
+        if (alternateTeams != null) {
+          teamHistory = _recordTeams(teamHistory, alternateTeams);
+          validResult = TeamGenerationResult(
+            teams: alternateTeams,
+            restingPlayers: lastAttempt.restingPlayers,
+          );
+          break;
+        }
+      }
+
       if (cycleComplete) {
         teamHistory = DailyTeamHistory.forDate(DateTime.now());
         teamHistory = _recordTeams(teamHistory, lastAttempt.teams);
@@ -163,7 +181,12 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       }
     }
 
-    final result = validResult ?? lastAttempt;
+    final result = validResult ??
+        const TeamGenerationResult(
+          teams: [],
+          restingPlayers: [],
+          errorMessage: 'تعذر تكوين فرق جديدة بدون تكرار. حاول مرة أخرى.',
+        );
 
     if (result.isSuccess) {
       final notRestedYet =
@@ -202,6 +225,53 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       updatedHistory = updatedHistory.recordTeam(team);
     }
     return updatedHistory;
+  }
+
+  List<List<Player>>? _buildNonRepeatingTeams(
+    List<Player> players,
+    DailyTeamHistory history,
+  ) {
+    if (players.length.isOdd) return null;
+    final random = Random(DateTime.now().microsecondsSinceEpoch);
+
+    List<List<Player>>? backtrack(List<Player> remaining) {
+      if (remaining.isEmpty) return [];
+
+      final shuffled = List<Player>.from(remaining)..shuffle(random);
+      final first = shuffled.first;
+
+      for (var i = 1; i < shuffled.length; i++) {
+        final partner = shuffled[i];
+        if (_areTeammates(first.id, partner.id, history)) {
+          continue;
+        }
+
+        final nextRemaining = List<Player>.from(remaining)
+          ..remove(first)
+          ..remove(partner);
+
+        final restPairs = backtrack(nextRemaining);
+        if (restPairs != null) {
+          return [
+            [first, partner],
+            ...restPairs,
+          ];
+        }
+      }
+
+      return null;
+    }
+
+    return backtrack(players);
+  }
+
+  bool _areTeammates(String a, String b, DailyTeamHistory history) {
+    final teammates = history.teammates[a];
+    return teammates != null && teammates.contains(b);
+  }
+
+  List<Player> _flattenTeams(List<List<Player>> teams) {
+    return teams.expand((team) => team).toList();
   }
 
   bool _hasRepeatedTeam(List<List<Player>> teams, DailyTeamHistory history) {
