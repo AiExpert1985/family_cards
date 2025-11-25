@@ -6,17 +6,20 @@ import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import '../models/player.dart';
 import '../models/game.dart';
+import '../models/daily_team_history.dart';
 
 class SyncService {
   // Export data to JSON file
   Future<String?> exportData({
     required List<Player> players,
     required List<Game> games,
+    required DailyTeamHistory teamHistory,
   }) async {
     try {
       final data = {
         'players': players.map((p) => p.toJson()).toList(),
         'games': games.map((g) => g.toJson()).toList(),
+        'teamHistory': teamHistory.toJson(),
         'exportDate': DateTime.now().toIso8601String(),
       };
 
@@ -81,6 +84,13 @@ class SyncService {
       final importedGames =
           (data['games'] as List).map((g) => Game.fromJson(g)).toList();
 
+      DailyTeamHistory? importedHistory;
+      if (data['teamHistory'] != null) {
+        importedHistory = DailyTeamHistory.fromJson(
+          (data['teamHistory'] as Map).cast<String, dynamic>(),
+        );
+      }
+
       // Merge logic: avoid duplicates by ID
       final mergedPlayers = _mergePlayers(currentPlayers, importedPlayers);
       final mergedGames = _mergeGames(currentGames, importedGames);
@@ -88,6 +98,7 @@ class SyncService {
       return {
         'players': mergedPlayers,
         'games': mergedGames,
+        if (importedHistory != null) 'teamHistory': importedHistory,
         'addedPlayers': mergedPlayers.length - currentPlayers.length,
         'addedGames': mergedGames.length - currentGames.length,
       };

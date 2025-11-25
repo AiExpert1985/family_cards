@@ -3,6 +3,7 @@ import 'package:family_cards/pages/new_game_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/player.dart';
+import '../models/daily_team_history.dart';
 import '../models/team_generation_result.dart';
 import '../providers/providers.dart';
 import '../widgets/teams/team_display_card.dart';
@@ -121,11 +122,48 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       await storage.saveLastSelectedPlayerIdsCheck(selectedIds);
     }
 
-    final result = teamGenerator.generateTeams(
+    var teamHistory = await storage.getDailyTeamHistory();
+    TeamGenerationResult lastAttempt = teamGenerator.generateTeams(
       allPlayers: players,
       selectedPlayerIds: selectedIds,
       restedPlayerIds: activeRestedIds,
     );
+
+    TeamGenerationResult? validResult;
+    const maxAttempts = 20;
+
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      if (attempt > 0) {
+        lastAttempt = teamGenerator.generateTeams(
+          allPlayers: players,
+          selectedPlayerIds: selectedIds,
+          restedPlayerIds: activeRestedIds,
+        );
+      }
+
+      if (!lastAttempt.isSuccess) {
+        validResult = lastAttempt;
+        break;
+      }
+
+      final cycleComplete = _isCycleComplete(selectedIds, teamHistory);
+      final hasRepeatedTeam = _hasRepeatedTeam(lastAttempt.teams, teamHistory);
+
+      if (!hasRepeatedTeam) {
+        teamHistory = _recordTeams(teamHistory, lastAttempt.teams);
+        validResult = lastAttempt;
+        break;
+      }
+
+      if (cycleComplete) {
+        teamHistory = DailyTeamHistory.forDate(DateTime.now());
+        teamHistory = _recordTeams(teamHistory, lastAttempt.teams);
+        validResult = lastAttempt;
+        break;
+      }
+    }
+
+    final result = validResult ?? lastAttempt;
 
     if (result.isSuccess) {
       final notRestedYet =
@@ -150,8 +188,61 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
 
     // Save result after setting state
     if (result.isSuccess) {
+      await storage.saveDailyTeamHistory(teamHistory);
       await _saveResult(result);
     }
+  }
+
+  DailyTeamHistory _recordTeams(
+    DailyTeamHistory history,
+    List<List<Player>> teams,
+  ) {
+    var updatedHistory = history;
+    for (final team in teams) {
+      updatedHistory = updatedHistory.recordTeam(team);
+    }
+    return updatedHistory;
+  }
+
+  bool _hasRepeatedTeam(List<List<Player>> teams, DailyTeamHistory history) {
+    for (final team in teams) {
+      if (team.length < 2) continue;
+      for (var i = 0; i < team.length; i++) {
+        for (var j = i + 1; j < team.length; j++) {
+          final a = team[i].id;
+          final b = team[j].id;
+          final teammates = history.teammates[a];
+          if (teammates != null && teammates.contains(b)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  bool _isCycleComplete(Set<String> selectedIds, DailyTeamHistory history) {
+    if (selectedIds.length < 2) return false;
+
+    final totalPairs = (selectedIds.length * (selectedIds.length - 1)) ~/ 2;
+    final recordedPairs = <String>{};
+
+    for (final entry in history.teammates.entries) {
+      if (!selectedIds.contains(entry.key)) continue;
+      for (final teammate in entry.value) {
+        if (selectedIds.contains(teammate)) {
+          final pairKey = _pairKey(entry.key, teammate);
+          recordedPairs.add(pairKey);
+        }
+      }
+    }
+
+    return recordedPairs.length >= totalPairs && totalPairs > 0;
+  }
+
+  String _pairKey(String a, String b) {
+    final sorted = [a, b]..sort();
+    return sorted.join('-');
   }
 
   bool _setsEqual(Set<String> a, Set<String> b) {

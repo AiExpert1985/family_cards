@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/player.dart';
 import '../models/game.dart';
+import '../models/daily_team_history.dart';
 
 class StorageService {
   static const String _playersKey = 'players';
@@ -126,6 +127,7 @@ class StorageService {
   }
 
   static const String _lastTeamResultKey = 'lastTeamResult';
+  static const String _teamHistoryKey = 'teamHistory';
 
   Future<Map<String, dynamic>?> getLastTeamResult() async {
     final prefs = await SharedPreferences.getInstance();
@@ -152,6 +154,44 @@ class StorageService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_lastTeamResultKey);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<DailyTeamHistory> getDailyTeamHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? data = prefs.getString(_teamHistoryKey);
+
+    if (data == null || data.isEmpty) {
+      final fresh = DailyTeamHistory.forDate(DateTime.now());
+      await saveDailyTeamHistory(fresh);
+      return fresh;
+    }
+
+    try {
+      final decoded = jsonDecode(data) as Map<String, dynamic>;
+      final history = DailyTeamHistory.fromJson(decoded);
+
+      if (!history.isSameDay(DateTime.now())) {
+        final fresh = DailyTeamHistory.forDate(DateTime.now());
+        await saveDailyTeamHistory(fresh);
+        return fresh;
+      }
+
+      return history;
+    } catch (e) {
+      final fresh = DailyTeamHistory.forDate(DateTime.now());
+      await saveDailyTeamHistory(fresh);
+      return fresh;
+    }
+  }
+
+  Future<bool> saveDailyTeamHistory(DailyTeamHistory history) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_teamHistoryKey, jsonEncode(history.toJson()));
       return true;
     } catch (e) {
       return false;

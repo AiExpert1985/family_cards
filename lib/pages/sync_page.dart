@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/providers.dart';
+import '../models/daily_team_history.dart';
 
 class SyncPage extends ConsumerStatefulWidget {
   const SyncPage({super.key});
@@ -28,6 +29,7 @@ class _SyncPageState extends ConsumerState<SyncPage> {
 
     final players = ref.read(playersProvider).value ?? [];
     final games = ref.read(gamesProvider).value ?? [];
+    final teamHistory = await ref.read(storageServiceProvider).getDailyTeamHistory();
 
     if (players.isEmpty && games.isEmpty) {
       if (mounted) {
@@ -46,6 +48,7 @@ class _SyncPageState extends ConsumerState<SyncPage> {
     final filePath = await syncService.exportData(
       players: players,
       games: games,
+      teamHistory: teamHistory,
     );
 
     if (filePath != null) {
@@ -95,6 +98,12 @@ class _SyncPageState extends ConsumerState<SyncPage> {
     if (result != null) {
       await ref.read(playersProvider.notifier).updatePlayers(result['players']);
       await ref.read(gamesProvider.notifier).updateGames(result['games']);
+      final importedHistory = result['teamHistory'] as DailyTeamHistory?;
+      if (importedHistory != null) {
+        await ref
+            .read(storageServiceProvider)
+            .saveDailyTeamHistory(importedHistory);
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
