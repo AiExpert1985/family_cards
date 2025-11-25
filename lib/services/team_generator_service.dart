@@ -5,7 +5,7 @@ import '../models/player.dart';
 import '../models/team_generation_result.dart';
 
 class TeamGeneratorService {
-  static const int _maxRetries = 100;
+  static const int _maxRandomRetries = 50;
 
   TeamGenerationResult generateTeams({
     required List<Player> allPlayers,
@@ -63,7 +63,8 @@ class TeamGeneratorService {
     Random random,
     List<Player> allPlayers,
   ) {
-    for (int attempt = 0; attempt < _maxRetries; attempt++) {
+    // Try random shuffles first
+    for (int attempt = 0; attempt < _maxRandomRetries; attempt++) {
       final shuffled = List<Player>.from(playingPlayers)..shuffle(random);
       final teams = <List<Player>>[];
 
@@ -83,7 +84,7 @@ class TeamGeneratorService {
       }
     }
 
-    // Max retries reached, use least-used pairings
+    // Use least-used pairings algorithm with randomization
     final teams = _generateLeastUsedPairings(playingPlayers, random);
     final updatedPlayers = _updatePlayerPairings(teams, allPlayers);
     return TeamGenerationResult(
@@ -112,11 +113,10 @@ class TeamGeneratorService {
     final teams = <List<Player>>[];
 
     while (remaining.length >= 2) {
-      Player? bestPlayer1;
-      Player? bestPlayer2;
       int minCount = 1000000;
+      final candidates = <List<Player>>[];
 
-      // Find the pairing with minimum count
+      // Find all pairings with minimum count
       for (int i = 0; i < remaining.length; i++) {
         for (int j = i + 1; j < remaining.length; j++) {
           final p1 = remaining[i];
@@ -125,16 +125,20 @@ class TeamGeneratorService {
 
           if (count < minCount) {
             minCount = count;
-            bestPlayer1 = p1;
-            bestPlayer2 = p2;
+            candidates.clear();
+            candidates.add([p1, p2]);
+          } else if (count == minCount) {
+            candidates.add([p1, p2]);
           }
         }
       }
 
-      if (bestPlayer1 != null && bestPlayer2 != null) {
-        teams.add([bestPlayer1, bestPlayer2]);
-        remaining.remove(bestPlayer1);
-        remaining.remove(bestPlayer2);
+      if (candidates.isNotEmpty) {
+        // Randomly pick from candidates with minimum count
+        final selectedPair = candidates[random.nextInt(candidates.length)];
+        teams.add(selectedPair);
+        remaining.remove(selectedPair[0]);
+        remaining.remove(selectedPair[1]);
       } else {
         break;
       }
