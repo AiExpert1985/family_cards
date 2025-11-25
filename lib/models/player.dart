@@ -3,13 +3,13 @@ class Player {
   final String id;
   final String name;
   final bool needsToPlay;
-  final List<String> pairedWithToday;
+  final Map<String, int> pairedWithToday;
 
   const Player({
     required this.id,
     required this.name,
     this.needsToPlay = false,
-    this.pairedWithToday = const [],
+    this.pairedWithToday = const {},
   });
 
   Map<String, dynamic> toJson() => {
@@ -24,15 +24,15 @@ class Player {
         name: json['name'] ?? 'غير معروف',
         needsToPlay: json['needsToPlay'] ?? false,
         pairedWithToday: json['pairedWithToday'] != null
-            ? List<String>.from(json['pairedWithToday'])
-            : [],
+            ? Map<String, int>.from(json['pairedWithToday'])
+            : {},
       );
 
   Player copyWith({
     String? id,
     String? name,
     bool? needsToPlay,
-    List<String>? pairedWithToday,
+    Map<String, int>? pairedWithToday,
   }) {
     return Player(
       id: id ?? this.id,

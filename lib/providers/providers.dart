@@ -196,6 +196,7 @@ final statisticsProvider = Provider<AsyncValue<List<PlayerStats>>>((ref) {
 
 final selectedStatisticsDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
 final selectedHeadToHeadPlayerProvider = StateProvider<String?>((ref) => null);
+final selectedTeammatePlayerProvider = StateProvider<String?>((ref) => null);
 
 final dailyStatisticsProvider = Provider<AsyncValue<List<PlayerStats>>>((ref) {
   final selectedDate = ref.watch(selectedStatisticsDateProvider);

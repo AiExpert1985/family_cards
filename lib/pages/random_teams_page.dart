@@ -38,7 +38,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
 
     if (shouldReset) {
       final players = ref.read(playersProvider).value ?? [];
-      final resetPlayers = players.map((p) => p.copyWith(pairedWithToday: [])).toList();
+      final resetPlayers = players.map((p) => p.copyWith(pairedWithToday: {})).toList();
       await ref.read(playersProvider.notifier).updatePlayers(resetPlayers);
 
       final today = DateTime.now();
@@ -266,7 +266,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
 
     if (confirmed == true) {
       final players = ref.read(playersProvider).value ?? [];
-      final resetPlayers = players.map((p) => p.copyWith(pairedWithToday: [])).toList();
+      final resetPlayers = players.map((p) => p.copyWith(pairedWithToday: {})).toList();
       await ref.read(playersProvider.notifier).updatePlayers(resetPlayers);
 
       if (mounted) {

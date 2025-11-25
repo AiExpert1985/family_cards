@@ -50,3 +50,21 @@ class FirstPlaceStats {
     required this.sharedCupDates,
   });
 }
+
+class TeammateStats {
+  final String teammateId;
+  final String teammateName;
+  final int played;
+  final int won;
+
+  const TeammateStats({
+    required this.teammateId,
+    required this.teammateName,
+    required this.played,
+    required this.won,
+  });
+
+  int get lost => played - won;
+  double get winRate => played > 0 ? (won / played * 100) : 0;
+  String get winRateText => '${winRate.toStringAsFixed(0)}%';
+}

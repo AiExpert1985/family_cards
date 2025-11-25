@@ -83,15 +83,8 @@ class TeamGeneratorService {
       }
     }
 
-    // Max retries reached, allow repeated pairings
-    final teams = <List<Player>>[];
-    playingPlayers.shuffle(random);
-    for (int i = 0; i < playingPlayers.length; i += 2) {
-      if (i + 1 < playingPlayers.length) {
-        teams.add([playingPlayers[i], playingPlayers[i + 1]]);
-      }
-    }
-
+    // Max retries reached, use least-used pairings
+    final teams = _generateLeastUsedPairings(playingPlayers, random);
     final updatedPlayers = _updatePlayerPairings(teams, allPlayers);
     return TeamGenerationResult(
       teams: teams,
@@ -105,8 +98,8 @@ class TeamGeneratorService {
       if (team.length == 2) {
         final player1 = team[0];
         final player2 = team[1];
-        if (player1.pairedWithToday.contains(player2.id) ||
-            player2.pairedWithToday.contains(player1.id)) {
+        if (player1.pairedWithToday.containsKey(player2.id) ||
+            player2.pairedWithToday.containsKey(player1.id)) {
           return true;
         }
       }
@@ -114,23 +107,66 @@ class TeamGeneratorService {
     return false;
   }
 
+  List<List<Player>> _generateLeastUsedPairings(List<Player> players, Random random) {
+    final remaining = List<Player>.from(players);
+    final teams = <List<Player>>[];
+
+    while (remaining.length >= 2) {
+      Player? bestPlayer1;
+      Player? bestPlayer2;
+      int minCount = 1000000;
+
+      // Find the pairing with minimum count
+      for (int i = 0; i < remaining.length; i++) {
+        for (int j = i + 1; j < remaining.length; j++) {
+          final p1 = remaining[i];
+          final p2 = remaining[j];
+          final count = (p1.pairedWithToday[p2.id] ?? 0) + (p2.pairedWithToday[p1.id] ?? 0);
+
+          if (count < minCount) {
+            minCount = count;
+            bestPlayer1 = p1;
+            bestPlayer2 = p2;
+          }
+        }
+      }
+
+      if (bestPlayer1 != null && bestPlayer2 != null) {
+        teams.add([bestPlayer1, bestPlayer2]);
+        remaining.remove(bestPlayer1);
+        remaining.remove(bestPlayer2);
+      } else {
+        break;
+      }
+    }
+
+    return teams;
+  }
+
   List<Player> _updatePlayerPairings(List<List<Player>> teams, List<Player> allPlayers) {
-    final pairingsMap = <String, Set<String>>{};
+    final pairingsMap = <String, Map<String, int>>{};
 
     for (final team in teams) {
       if (team.length == 2) {
         final player1Id = team[0].id;
         final player2Id = team[1].id;
 
-        pairingsMap.putIfAbsent(player1Id, () => {}).add(player2Id);
-        pairingsMap.putIfAbsent(player2Id, () => {}).add(player1Id);
+        pairingsMap.putIfAbsent(player1Id, () => {});
+        pairingsMap.putIfAbsent(player2Id, () => {});
+
+        pairingsMap[player1Id]![player2Id] =
+            (pairingsMap[player1Id]![player2Id] ?? 0) + 1;
+        pairingsMap[player2Id]![player1Id] =
+            (pairingsMap[player2Id]![player1Id] ?? 0) + 1;
       }
     }
 
     return allPlayers.map((player) {
       if (pairingsMap.containsKey(player.id)) {
-        final newPairings = List<String>.from(player.pairedWithToday);
-        newPairings.addAll(pairingsMap[player.id]!);
+        final newPairings = Map<String, int>.from(player.pairedWithToday);
+        pairingsMap[player.id]!.forEach((partnerId, count) {
+          newPairings[partnerId] = (newPairings[partnerId] ?? 0) + count;
+        });
         return player.copyWith(pairedWithToday: newPairings);
       }
       return player;

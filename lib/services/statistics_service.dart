@@ -160,6 +160,72 @@ class StatisticsService {
     return stats;
   }
 
+  List<TeammateStats> calculateTeammateStats({
+    required String playerId,
+    required List<Player> players,
+    required List<Game> games,
+  }) {
+    if (players.isEmpty || playerId.isEmpty) return const <TeammateStats>[];
+
+    final playerIds = players.map((p) => p.id).toSet();
+    if (!playerIds.contains(playerId)) {
+      return const <TeammateStats>[];
+    }
+
+    final accumulator = <String, _TeammateAccumulator>{};
+
+    for (final player in players) {
+      if (player.id == playerId) continue;
+      accumulator[player.id] = _TeammateAccumulator(
+        teammateId: player.id,
+        teammateName: player.name,
+      );
+    }
+
+    for (final game in games) {
+      final isTeam1 =
+          game.team1Player1 == playerId || game.team1Player2 == playerId;
+      final isTeam2 =
+          game.team2Player1 == playerId || game.team2Player2 == playerId;
+
+      if (!isTeam1 && !isTeam2) continue;
+
+      final didWin = (isTeam1 && game.winningTeam == 1) ||
+          (isTeam2 && game.winningTeam == 2);
+      final teammate = isTeam1
+          ? (game.team1Player1 == playerId ? game.team1Player2 : game.team1Player1)
+          : (game.team2Player1 == playerId ? game.team2Player2 : game.team2Player1);
+
+      final stats = accumulator[teammate];
+      if (stats == null) continue;
+      stats.played++;
+      if (didWin) stats.won++;
+    }
+
+    final stats =
+        accumulator.values
+            .map(
+              (value) => TeammateStats(
+                teammateId: value.teammateId,
+                teammateName: value.teammateName,
+                played: value.played,
+                won: value.won,
+              ),
+            )
+            .toList()
+          ..sort(
+            (a, b) {
+              final rateCompare = b.winRate.compareTo(a.winRate);
+              if (rateCompare != 0) return rateCompare;
+              final playedCompare = b.played.compareTo(a.played);
+              if (playedCompare != 0) return playedCompare;
+              return a.teammateName.compareTo(b.teammateName);
+            },
+          );
+
+    return stats;
+  }
+
   List<PlayerStats> _calculateStats({
     required List<Player> players,
     required List<Game> games,
@@ -242,5 +308,17 @@ class _HeadToHeadAccumulator {
   _HeadToHeadAccumulator({
     required this.opponentId,
     required this.opponentName,
+  });
+}
+
+class _TeammateAccumulator {
+  final String teammateId;
+  final String teammateName;
+  int played = 0;
+  int won = 0;
+
+  _TeammateAccumulator({
+    required this.teammateId,
+    required this.teammateName,
   });
 }

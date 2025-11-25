@@ -17,7 +17,7 @@ class StatisticsPage extends ConsumerWidget {
     final selectedDate = ref.watch(selectedStatisticsDateProvider);
 
     return DefaultTabController(
-      length: 4,
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('الإحصائيات'),
@@ -25,7 +25,14 @@ class StatisticsPage extends ConsumerWidget {
           foregroundColor: Colors.white,
           bottom: const TabBar(
             labelColor: Colors.amber,
-            tabs: [Tab(text: 'عام'), Tab(text: 'يومي'), Tab(text: 'لاعبين'), Tab(text: 'الابطال')],
+            isScrollable: true,
+            tabs: [
+              Tab(text: 'عام'),
+              Tab(text: 'يومي'),
+              Tab(text: 'ضد'),
+              Tab(text: 'مع'),
+              Tab(text: 'الابطال'),
+            ],
           ),
         ),
         body: TabBarView(
@@ -40,6 +47,7 @@ class StatisticsPage extends ConsumerWidget {
               header: _buildDateSelector(context, ref, selectedDate),
             ),
             _buildHeadToHeadTab(context, ref),
+            _buildTeammateTab(context, ref),
             _buildFirstPlaceTab(context, ref),
           ],
         ),
@@ -225,6 +233,145 @@ class StatisticsPage extends ConsumerWidget {
           error:
               (error, _) => Center(
                 child: Text('حدث خطأ أثناء جلب المواجهات: ${error.toString()}'),
+              ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error:
+          (error, _) => Center(
+            child: Text('حدث خطأ أثناء جلب اللاعبين: ${error.toString()}'),
+          ),
+    );
+  }
+
+  Widget _buildTeammateTab(BuildContext context, WidgetRef ref) {
+    final playersAsync = ref.watch(playersProvider);
+    final gamesAsync = ref.watch(gamesProvider);
+    final selectedPlayerId = ref.watch(selectedTeammatePlayerProvider);
+
+    return playersAsync.when(
+      data: (players) {
+        if (players.isEmpty) {
+          return Center(
+            child: EmptyState(
+              icon: Icons.people_outline,
+              message: 'لا يوجد لاعبون.',
+            ),
+          );
+        }
+
+        final effectivePlayerId = selectedPlayerId ?? players.first.id;
+        if (selectedPlayerId == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.read(selectedTeammatePlayerProvider.notifier).state =
+                effectivePlayerId;
+          });
+        }
+
+        return gamesAsync.when(
+          data: (games) {
+            final statsService = ref.watch(statisticsServiceProvider);
+            final teammateStats = statsService.calculateTeammateStats(
+              playerId: effectivePlayerId,
+              players: players,
+              games: games,
+            );
+
+            return Directionality(
+              textDirection: TextDirection.rtl,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      value: effectivePlayerId,
+                      decoration: InputDecoration(
+                        labelText: 'اختر اللاعب',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                      ),
+                      items:
+                          players
+                              .map(
+                                (player) => DropdownMenuItem(
+                                  value: player.id,
+                                  child: Text(player.name),
+                                ),
+                              )
+                              .toList(),
+                      onChanged:
+                          (value) =>
+                              ref
+                                  .read(
+                                    selectedTeammatePlayerProvider.notifier,
+                                  )
+                                  .state = value,
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child:
+                          teammateStats.isEmpty
+                              ? EmptyState(
+                                icon: Icons.handshake,
+                                message: 'لا توجد احصائيات مسجلة لهذا اللاعب.',
+                              )
+                              : ListView.separated(
+                                itemCount: teammateStats.length,
+                                separatorBuilder:
+                                    (_, __) => const SizedBox(height: 8),
+                                itemBuilder: (context, index) {
+                                  final stat = teammateStats[index];
+                                  return Card(
+                                    elevation: 2,
+                                    child: ListTile(
+                                      title: Text(
+                                        stat.teammateName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        'فوز: ${stat.won} • خسارة: ${stat.lost}',
+                                      ),
+                                      trailing: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: _getWinRateColor(stat.winRate),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          stat.winRateText,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error:
+              (error, _) => Center(
+                child: Text('حدث خطأ أثناء جلب الاحصائيات: ${error.toString()}'),
               ),
         );
       },
