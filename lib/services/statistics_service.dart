@@ -226,6 +226,22 @@ class StatisticsService {
     return stats;
   }
 
+  List<Game> getPlayerGames({
+    required String playerId,
+    required List<Game> games,
+  }) {
+    return games
+        .where(
+          (game) =>
+              game.team1Player1 == playerId ||
+              game.team1Player2 == playerId ||
+              game.team2Player1 == playerId ||
+              game.team2Player2 == playerId,
+        )
+        .toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+  }
+
   List<PlayerStats> _calculateStats({
     required List<Player> players,
     required List<Game> games,

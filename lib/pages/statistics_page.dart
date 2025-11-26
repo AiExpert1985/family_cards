@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/game.dart';
 import '../models/player_stats.dart';
 import '../providers/providers.dart';
 import '../widgets/common/empty_state.dart';
@@ -17,7 +18,7 @@ class StatisticsPage extends ConsumerWidget {
     final selectedDate = ref.watch(selectedStatisticsDateProvider);
 
     return DefaultTabController(
-      length: 5,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('الإحصائيات'),
@@ -29,8 +30,6 @@ class StatisticsPage extends ConsumerWidget {
             tabs: [
               Tab(text: 'عام'),
               Tab(text: 'يومي'),
-              Tab(text: 'ضد'),
-              Tab(text: 'مع'),
               Tab(text: 'الابطال'),
             ],
           ),
@@ -38,16 +37,18 @@ class StatisticsPage extends ConsumerWidget {
         body: TabBarView(
           children: [
             _buildStatsTab(
+              context: context,
+              ref: ref,
               statsAsync: overallStatsAsync,
               emptyMessage: 'لا توجد إحصائيات\nقم بإضافة مباريات أولاً',
             ),
             _buildStatsTab(
+              context: context,
+              ref: ref,
               statsAsync: dailyStatsAsync,
               emptyMessage: 'لا توجد مباريات في هذا اليوم',
               header: _buildDateSelector(context, ref, selectedDate),
             ),
-            _buildHeadToHeadTab(context, ref),
-            _buildTeammateTab(context, ref),
             _buildFirstPlaceTab(context, ref),
           ],
         ),
@@ -56,6 +57,8 @@ class StatisticsPage extends ConsumerWidget {
   }
 
   Widget _buildStatsTab({
+    required BuildContext context,
+    required WidgetRef ref,
     required AsyncValue<List<PlayerStats>> statsAsync,
     required String emptyMessage,
     Widget? header,
@@ -83,7 +86,7 @@ class StatisticsPage extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final stat = stats[index];
                   final rank = ranks[index];
-                  return _buildStatCard(stat, rank);
+                  return _buildStatCard(context, ref, stat, rank);
                 },
               );
             },
@@ -521,42 +524,51 @@ class StatisticsPage extends ConsumerWidget {
     );
   }
 
-  Card _buildStatCard(PlayerStats stat, int rank) {
+  Widget _buildStatCard(
+    BuildContext context,
+    WidgetRef ref,
+    PlayerStats stat,
+    int rank,
+  ) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: _getRankColor(rank),
-          child: Text(
-            '$rank',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+      child: InkWell(
+        onTap: () => _showPlayerDetailsBottomSheet(context, ref, stat.playerId),
+        borderRadius: BorderRadius.circular(12),
+        child: ListTile(
+          leading: CircleAvatar(
+            backgroundColor: _getRankColor(rank),
+            child: Text(
+              '$rank',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-        ),
-        title: Text(
-          stat.name,
-          textAlign: TextAlign.right,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        subtitle: Text(
-          'انتصارات: ${stat.won} • خسائر: ${stat.lost}',
-          textAlign: TextAlign.right,
-        ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: _getWinRateColor(stat.winRate),
-            borderRadius: BorderRadius.circular(12),
+          title: Text(
+            stat.name,
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
-          child: Text(
-            stat.winRateText,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
+          subtitle: Text(
+            'انتصارات: ${stat.won} • خسائر: ${stat.lost}',
+            textAlign: TextAlign.right,
+          ),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: _getWinRateColor(stat.winRate),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              stat.winRateText,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ),
         ),
@@ -670,5 +682,373 @@ class StatisticsPage extends ConsumerWidget {
     }
 
     return ranks;
+  }
+
+  void _showPlayerDetailsBottomSheet(
+    BuildContext context,
+    WidgetRef ref,
+    String playerId,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: _PlayerDetailsBottomSheet(
+            playerId: playerId,
+            scrollController: scrollController,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PlayerDetailsBottomSheet extends ConsumerWidget {
+  final String playerId;
+  final ScrollController scrollController;
+
+  const _PlayerDetailsBottomSheet({
+    required this.playerId,
+    required this.scrollController,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final playersAsync = ref.watch(playersProvider);
+    final gamesAsync = ref.watch(gamesProvider);
+
+    return playersAsync.when(
+      data: (players) {
+        final player = players.firstWhere(
+          (p) => p.id == playerId,
+          orElse: () => players.first,
+        );
+
+        return DefaultTabController(
+          length: 3,
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  player.name,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const TabBar(
+                labelColor: Colors.purple,
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: Colors.purple,
+                tabs: [
+                  Tab(text: 'خصوم'),
+                  Tab(text: 'شركاء'),
+                  Tab(text: 'لعبات'),
+                ],
+              ),
+              Expanded(
+                child: gamesAsync.when(
+                  data: (games) => TabBarView(
+                    children: [
+                      _buildAgainstTab(ref, players, games),
+                      _buildWithTab(ref, players, games),
+                      _buildGamesTab(ref, players, games),
+                    ],
+                  ),
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (error, _) => Center(child: Text('خطأ: $error')),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => Center(child: Text('خطأ: $error')),
+    );
+  }
+
+  Widget _buildAgainstTab(
+    WidgetRef ref,
+    List<dynamic> players,
+    List<Game> games,
+  ) {
+    final statsService = ref.watch(statisticsServiceProvider);
+    final headToHeadStats = statsService.calculateHeadToHeadStats(
+      playerId: playerId,
+      players: players,
+      games: games,
+    );
+
+    if (headToHeadStats.isEmpty) {
+      return const Center(
+        child: EmptyState(
+          icon: Icons.sports_kabaddi,
+          message: 'لا توجد مواجهات مسجلة',
+        ),
+      );
+    }
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: headToHeadStats.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (context, index) {
+          final stat = headToHeadStats[index];
+          return Card(
+            elevation: 2,
+            child: ListTile(
+              title: Text(
+                stat.opponentName,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text('فوز: ${stat.won} • خسارة: ${stat.lost}'),
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _getWinRateColor(stat.winRate),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  stat.winRateText,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildWithTab(
+    WidgetRef ref,
+    List<dynamic> players,
+    List<Game> games,
+  ) {
+    final statsService = ref.watch(statisticsServiceProvider);
+    final teammateStats = statsService.calculateTeammateStats(
+      playerId: playerId,
+      players: players,
+      games: games,
+    );
+
+    if (teammateStats.isEmpty) {
+      return const Center(
+        child: EmptyState(
+          icon: Icons.handshake,
+          message: 'لا توجد احصائيات شركاء',
+        ),
+      );
+    }
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: teammateStats.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (context, index) {
+          final stat = teammateStats[index];
+          return Card(
+            elevation: 2,
+            child: ListTile(
+              title: Text(
+                stat.teammateName,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text('فوز: ${stat.won} • خسارة: ${stat.lost}'),
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _getWinRateColor(stat.winRate),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  stat.winRateText,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildGamesTab(
+    WidgetRef ref,
+    List<dynamic> players,
+    List<Game> games,
+  ) {
+    final statsService = ref.watch(statisticsServiceProvider);
+    final playerGames = statsService.getPlayerGames(
+      playerId: playerId,
+      games: games,
+    );
+
+    if (playerGames.isEmpty) {
+      return const Center(
+        child: EmptyState(
+          icon: Icons.sports_esports,
+          message: 'لا توجد لعبات مسجلة',
+        ),
+      );
+    }
+
+    final playerMap = {for (var p in players) p.id: p.name};
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: playerGames.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (context, index) {
+          final game = playerGames[index];
+          final team1Player1Name = playerMap[game.team1Player1] ?? '';
+          final team1Player2Name = playerMap[game.team1Player2] ?? '';
+          final team2Player1Name = playerMap[game.team2Player1] ?? '';
+          final team2Player2Name = playerMap[game.team2Player2] ?? '';
+
+          final isPlayerInTeam1 =
+              game.team1Player1 == playerId || game.team1Player2 == playerId;
+          final didWin = (isPlayerInTeam1 && game.winningTeam == 1) ||
+              (!isPlayerInTeam1 && game.winningTeam == 2);
+
+          final formattedDate = intl.DateFormat('yyyy/MM/dd').format(game.date);
+
+          return Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        didWin ? Icons.check_circle : Icons.cancel,
+                        color: didWin ? Colors.green : Colors.red,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        formattedDate,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: game.winningTeam == 1
+                                ? Colors.green.withOpacity(0.1)
+                                : Colors.grey.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isPlayerInTeam1
+                                  ? Colors.purple
+                                  : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                team1Player1Name,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              Text(
+                                team1Player2Name,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Text('VS', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: game.winningTeam == 2
+                                ? Colors.green.withOpacity(0.1)
+                                : Colors.grey.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: !isPlayerInTeam1
+                                  ? Colors.purple
+                                  : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                team2Player1Name,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              Text(
+                                team2Player2Name,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Color _getWinRateColor(double winRate) {
+    if (winRate >= 70) return Colors.green;
+    if (winRate >= 50) return Colors.orange;
+    return Colors.red;
   }
 }
