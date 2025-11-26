@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/game.dart';
+import '../models/player.dart';
 import '../models/player_stats.dart';
 import '../providers/providers.dart';
 import '../widgets/common/empty_state.dart';
@@ -105,284 +106,6 @@ class StatisticsPage extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildHeadToHeadTab(BuildContext context, WidgetRef ref) {
-    final playersAsync = ref.watch(playersProvider);
-    final gamesAsync = ref.watch(gamesProvider);
-    final selectedPlayerId = ref.watch(selectedHeadToHeadPlayerProvider);
-
-    return playersAsync.when(
-      data: (players) {
-        if (players.isEmpty) {
-          return Center(
-            child: EmptyState(
-              icon: Icons.people_outline,
-              message: 'لا يوجد لاعبون لحساب المواجهات.',
-            ),
-          );
-        }
-
-        final effectivePlayerId = selectedPlayerId ?? players.first.id;
-        if (selectedPlayerId == null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ref.read(selectedHeadToHeadPlayerProvider.notifier).state =
-                effectivePlayerId;
-          });
-        }
-
-        return gamesAsync.when(
-          data: (games) {
-            final statsService = ref.watch(statisticsServiceProvider);
-            final headToHeadStats = statsService.calculateHeadToHeadStats(
-              playerId: effectivePlayerId,
-              players: players,
-              games: games,
-            );
-
-            return Directionality(
-              textDirection: TextDirection.rtl,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    DropdownButtonFormField<String>(
-                      value: effectivePlayerId,
-                      decoration: InputDecoration(
-                        labelText: 'اختر اللاعب',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                      ),
-                      items:
-                          players
-                              .map(
-                                (player) => DropdownMenuItem(
-                                  value: player.id,
-                                  child: Text(player.name),
-                                ),
-                              )
-                              .toList(),
-                      onChanged:
-                          (value) =>
-                              ref
-                                  .read(
-                                    selectedHeadToHeadPlayerProvider.notifier,
-                                  )
-                                  .state = value,
-                    ),
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child:
-                          headToHeadStats.isEmpty
-                              ? EmptyState(
-                                icon: Icons.sports_kabaddi,
-                                message: 'لا توجد مواجهات مسجلة لهذا اللاعب.',
-                              )
-                              : ListView.separated(
-                                itemCount: headToHeadStats.length,
-                                separatorBuilder:
-                                    (_, __) => const SizedBox(height: 8),
-                                itemBuilder: (context, index) {
-                                  final stat = headToHeadStats[index];
-                                  return Card(
-                                    elevation: 2,
-                                    child: ListTile(
-                                      title: Text(
-                                        stat.opponentName,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      subtitle: Text(
-                                        'فوز: ${stat.won} • خسارة: ${stat.lost}',
-                                      ),
-                                      trailing: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 6,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _getWinRateColor(stat.winRate),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          stat.winRateText,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error:
-              (error, _) => Center(
-                child: Text('حدث خطأ أثناء جلب المواجهات: ${error.toString()}'),
-              ),
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error:
-          (error, _) => Center(
-            child: Text('حدث خطأ أثناء جلب اللاعبين: ${error.toString()}'),
-          ),
-    );
-  }
-
-  Widget _buildTeammateTab(BuildContext context, WidgetRef ref) {
-    final playersAsync = ref.watch(playersProvider);
-    final gamesAsync = ref.watch(gamesProvider);
-    final selectedPlayerId = ref.watch(selectedTeammatePlayerProvider);
-
-    return playersAsync.when(
-      data: (players) {
-        if (players.isEmpty) {
-          return Center(
-            child: EmptyState(
-              icon: Icons.people_outline,
-              message: 'لا يوجد لاعبون.',
-            ),
-          );
-        }
-
-        final effectivePlayerId = selectedPlayerId ?? players.first.id;
-        if (selectedPlayerId == null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ref.read(selectedTeammatePlayerProvider.notifier).state =
-                effectivePlayerId;
-          });
-        }
-
-        return gamesAsync.when(
-          data: (games) {
-            final statsService = ref.watch(statisticsServiceProvider);
-            final teammateStats = statsService.calculateTeammateStats(
-              playerId: effectivePlayerId,
-              players: players,
-              games: games,
-            );
-
-            return Directionality(
-              textDirection: TextDirection.rtl,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    DropdownButtonFormField<String>(
-                      value: effectivePlayerId,
-                      decoration: InputDecoration(
-                        labelText: 'اختر اللاعب',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                      ),
-                      items:
-                          players
-                              .map(
-                                (player) => DropdownMenuItem(
-                                  value: player.id,
-                                  child: Text(player.name),
-                                ),
-                              )
-                              .toList(),
-                      onChanged:
-                          (value) =>
-                              ref
-                                  .read(
-                                    selectedTeammatePlayerProvider.notifier,
-                                  )
-                                  .state = value,
-                    ),
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child:
-                          teammateStats.isEmpty
-                              ? EmptyState(
-                                icon: Icons.handshake,
-                                message: 'لا توجد احصائيات مسجلة لهذا اللاعب.',
-                              )
-                              : ListView.separated(
-                                itemCount: teammateStats.length,
-                                separatorBuilder:
-                                    (_, __) => const SizedBox(height: 8),
-                                itemBuilder: (context, index) {
-                                  final stat = teammateStats[index];
-                                  return Card(
-                                    elevation: 2,
-                                    child: ListTile(
-                                      title: Text(
-                                        stat.teammateName,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      subtitle: Text(
-                                        'فوز: ${stat.won} • خسارة: ${stat.lost}',
-                                      ),
-                                      trailing: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 6,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _getWinRateColor(stat.winRate),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          stat.winRateText,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error:
-              (error, _) => Center(
-                child: Text('حدث خطأ أثناء جلب الاحصائيات: ${error.toString()}'),
-              ),
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error:
-          (error, _) => Center(
-            child: Text('حدث خطأ أثناء جلب اللاعبين: ${error.toString()}'),
-          ),
     );
   }
 
@@ -790,7 +513,7 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
 
   Widget _buildAgainstTab(
     WidgetRef ref,
-    List<dynamic> players,
+    List<Player> players,
     List<Game> games,
   ) {
     final statsService = ref.watch(statisticsServiceProvider);
@@ -848,7 +571,7 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
 
   Widget _buildWithTab(
     WidgetRef ref,
-    List<dynamic> players,
+    List<Player> players,
     List<Game> games,
   ) {
     final statsService = ref.watch(statisticsServiceProvider);
@@ -906,7 +629,7 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
 
   Widget _buildGamesTab(
     WidgetRef ref,
-    List<dynamic> players,
+    List<Player> players,
     List<Game> games,
   ) {
     final statsService = ref.watch(statisticsServiceProvider);
@@ -978,8 +701,8 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: game.winningTeam == 1
-                                ? Colors.green.withOpacity(0.1)
-                                : Colors.grey.withOpacity(0.1),
+                                ? Colors.green.withValues(alpha: 0.1)
+                                : Colors.grey.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: isPlayerInTeam1
@@ -1011,8 +734,8 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: game.winningTeam == 2
-                                ? Colors.green.withOpacity(0.1)
-                                : Colors.grey.withOpacity(0.1),
+                                ? Colors.green.withValues(alpha: 0.1)
+                                : Colors.grey.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: !isPlayerInTeam1
