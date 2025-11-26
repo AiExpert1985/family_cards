@@ -10,7 +10,7 @@ import '../providers/providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/animations/animated_card.dart';
 import '../widgets/animations/animated_counter.dart';
-import '../widgets/animations/animated_progress_bar.dart';
+import '../widgets/animations/animated_trophy.dart';
 import '../widgets/common/empty_state.dart';
 import '../widgets/common/modern_tab_indicator.dart';
 import 'package:intl/intl.dart' as intl;
@@ -224,28 +224,10 @@ class StatisticsPage extends ConsumerWidget {
                       final date = stat.cupDates[index];
                       final dateKey = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
                       final isShared = stat.sharedCupDates.contains(dateKey);
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.emoji_events,
-                            color: isShared ? Colors.brown : Colors.amber,
-                            size: 20,
-                          ),
-                          Text(
-                            '${date.day}/${date.month}',
-                            style: const TextStyle(
-                              fontSize: 8,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            '${date.year}',
-                            style: const TextStyle(
-                              fontSize: 8,
-                            ),
-                          ),
-                        ],
+                      return AnimatedTrophy(
+                        index: index,
+                        isShared: isShared,
+                        date: date,
                       );
                     },
                   ),
@@ -282,116 +264,102 @@ class StatisticsPage extends ConsumerWidget {
     return AnimatedCard(
       onTap: () => _showPlayerDetailsBottomSheet(context, ref, stat.playerId),
       child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
           children: [
-            Row(
-              children: [
-                // Animated circular progress around rank
-                AnimatedCircularProgress(
-                  percentage: stat.winRate,
-                  color: AppTheme.getWinRateColor(stat.winRate),
-                  child: CircleAvatar(
-                    backgroundColor: AppTheme.getRankColor(rank),
-                    child: Text(
-                      '$rank',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
+            // Rank badge
+            CircleAvatar(
+              backgroundColor: AppTheme.getRankColor(rank),
+              radius: 20,
+              child: Text(
+                '$rank',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
-                const SizedBox(width: 12),
-                // Player info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        stat.name,
-                        textAlign: TextAlign.right,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            'خسائر: ',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 13,
-                            ),
-                          ),
-                          AnimatedCounter(
-                            value: stat.lost,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 13,
-                            ),
-                          ),
-                          Text(
-                            ' • انتصارات: ',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 13,
-                            ),
-                          ),
-                          AnimatedCounter(
-                            value: stat.won,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // Win rate badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppTheme.getWinRateColor(stat.winRate),
-                        AppTheme.getWinRateColor(stat.winRate).withValues(alpha: 0.8),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.getWinRateColor(stat.winRate)
-                            .withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: AnimatedPercentage(
-                    value: stat.winRate,
+              ),
+            ),
+            const SizedBox(width: 16),
+            // Player info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    stat.name,
+                    textAlign: TextAlign.right,
                     style: const TextStyle(
-                      color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        'خسائر: ',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 13,
+                        ),
+                      ),
+                      AnimatedCounter(
+                        value: stat.lost,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 13,
+                        ),
+                      ),
+                      Text(
+                        ' • انتصارات: ',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 13,
+                        ),
+                      ),
+                      AnimatedCounter(
+                        value: stat.won,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-            // Animated progress bar
-            AnimatedProgressBar(
-              value: stat.winRate,
-              color: AppTheme.getWinRateColor(stat.winRate),
-              height: 6,
+            const SizedBox(width: 16),
+            // Win rate badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.getWinRateColor(stat.winRate),
+                    AppTheme.getWinRateColor(stat.winRate).withValues(alpha: 0.8),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.getWinRateColor(stat.winRate)
+                        .withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: AnimatedPercentage(
+                value: stat.winRate,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ),
           ],
         ),
@@ -500,7 +468,7 @@ class StatisticsPage extends ConsumerWidget {
       builder: (context) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: DraggableScrollableSheet(
-          initialChildSize: 0.7,
+          initialChildSize: 0.85,
           minChildSize: 0.5,
           maxChildSize: 0.95,
           builder: (context, scrollController) => Container(
