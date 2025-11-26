@@ -1,7 +1,9 @@
 // ============== pages/statistics_page.dart ==============
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart' as intl;
 
 import '../models/game.dart';
 import '../models/player.dart';
@@ -13,7 +15,6 @@ import '../widgets/animations/animated_counter.dart';
 import '../widgets/animations/animated_trophy.dart';
 import '../widgets/common/empty_state.dart';
 import '../widgets/common/modern_tab_indicator.dart';
-import 'package:intl/intl.dart' as intl;
 
 class StatisticsPage extends ConsumerWidget {
   const StatisticsPage({super.key});
@@ -33,9 +34,7 @@ class StatisticsPage extends ConsumerWidget {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           flexibleSpace: Container(
-            decoration: const BoxDecoration(
-              gradient: AppTheme.primaryGradient,
-            ),
+            decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
           ),
           foregroundColor: Colors.white,
           bottom: TabBar(
@@ -178,16 +177,11 @@ class StatisticsPage extends ConsumerWidget {
           },
           loading: () => const Center(child: CircularProgressIndicator()),
           error:
-              (error, _) => Center(
-                child: Text('حدث خطأ: ${error.toString()}'),
-              ),
+              (error, _) => Center(child: Text('حدث خطأ: ${error.toString()}')),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error:
-          (error, _) => Center(
-            child: Text('حدث خطأ: ${error.toString()}'),
-          ),
+      error: (error, _) => Center(child: Text('حدث خطأ: ${error.toString()}')),
     );
   }
 
@@ -218,23 +212,24 @@ class StatisticsPage extends ConsumerWidget {
                   alignment: WrapAlignment.center,
                   spacing: 8,
                   runSpacing: 8,
-                  children: List.generate(
-                    stat.firstPlaceCount,
-                    (index) {
-                      final date = stat.cupDates[index];
-                      final dateKey = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-                      final isShared = stat.sharedCupDates.contains(dateKey);
-                      return AnimatedTrophy(
-                        index: index,
-                        isShared: isShared,
-                        date: date,
-                      );
-                    },
-                  ),
+                  children: List.generate(stat.firstPlaceCount, (index) {
+                    final date = stat.cupDates[index];
+                    final dateKey =
+                        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+                    final isShared = stat.sharedCupDates.contains(dateKey);
+                    return AnimatedTrophy(
+                      index: index,
+                      isShared: isShared,
+                      date: date,
+                    );
+                  }),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.amber,
                   borderRadius: BorderRadius.circular(12),
@@ -300,31 +295,19 @@ class StatisticsPage extends ConsumerWidget {
                     children: [
                       Text(
                         'خسائر: ',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
                       ),
                       AnimatedCounter(
                         value: stat.lost,
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
                       ),
                       Text(
                         ' • انتصارات: ',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
                       ),
                       AnimatedCounter(
                         value: stat.won,
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
                       ),
                     ],
                   ),
@@ -339,14 +322,17 @@ class StatisticsPage extends ConsumerWidget {
                 gradient: LinearGradient(
                   colors: [
                     AppTheme.getWinRateColor(stat.winRate),
-                    AppTheme.getWinRateColor(stat.winRate).withValues(alpha: 0.8),
+                    AppTheme.getWinRateColor(
+                      stat.winRate,
+                    ).withValues(alpha: 0.8),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.getWinRateColor(stat.winRate)
-                        .withValues(alpha: 0.3),
+                    color: AppTheme.getWinRateColor(
+                      stat.winRate,
+                    ).withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -465,38 +451,44 @@ class StatisticsPage extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: DraggableScrollableSheet(
-          initialChildSize: 0.85,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (context, scrollController) => Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).colorScheme.surface,
-                  Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
-                ],
-              ),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, -5),
-                ),
-              ],
-            ),
-            child: _PlayerDetailsBottomSheet(
-              playerId: playerId,
-              scrollController: scrollController,
+      builder:
+          (context) => BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: DraggableScrollableSheet(
+              initialChildSize: 0.85,
+              minChildSize: 0.5,
+              maxChildSize: 0.95,
+              builder:
+                  (context, scrollController) => Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Theme.of(context).colorScheme.surface,
+                          Theme.of(
+                            context,
+                          ).colorScheme.surface.withValues(alpha: 0.95),
+                        ],
+                      ),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 20,
+                          offset: const Offset(0, -5),
+                        ),
+                      ],
+                    ),
+                    child: _PlayerDetailsBottomSheet(
+                      playerId: playerId,
+                      scrollController: scrollController,
+                    ),
+                  ),
             ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -537,24 +529,12 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
               ),
               Padding(
                 padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Text(
-                      player.name,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'تفاصيل اللاعب',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  player.name,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               TabBar(
@@ -581,14 +561,16 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
               ),
               Expanded(
                 child: gamesAsync.when(
-                  data: (games) => TabBarView(
-                    children: [
-                      _buildAgainstTab(ref, players, games),
-                      _buildWithTab(ref, players, games),
-                      _buildGamesTab(ref, players, games),
-                    ],
-                  ),
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  data:
+                      (games) => TabBarView(
+                        children: [
+                          _buildAgainstTab(ref, players, games),
+                          _buildWithTab(ref, players, games),
+                          _buildGamesTab(ref, players, games),
+                        ],
+                      ),
+                  loading:
+                      () => const Center(child: CircularProgressIndicator()),
                   error: (error, _) => Center(child: Text('خطأ: $error')),
                 ),
               ),
@@ -639,7 +621,10 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
               ),
               subtitle: Text('فوز: ${stat.won} • خسارة: ${stat.lost}'),
               trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppTheme.getWinRateColor(stat.winRate),
                   borderRadius: BorderRadius.circular(12),
@@ -659,11 +644,7 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildWithTab(
-    WidgetRef ref,
-    List<Player> players,
-    List<Game> games,
-  ) {
+  Widget _buildWithTab(WidgetRef ref, List<Player> players, List<Game> games) {
     final statsService = ref.watch(statisticsServiceProvider);
     final teammateStats = statsService.calculateTeammateStats(
       playerId: playerId,
@@ -697,7 +678,10 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
               ),
               subtitle: Text('فوز: ${stat.won} • خسارة: ${stat.lost}'),
               trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppTheme.getWinRateColor(stat.winRate),
                   borderRadius: BorderRadius.circular(12),
@@ -717,11 +701,7 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildGamesTab(
-    WidgetRef ref,
-    List<Player> players,
-    List<Game> games,
-  ) {
+  Widget _buildGamesTab(WidgetRef ref, List<Player> players, List<Game> games) {
     final statsService = ref.watch(statisticsServiceProvider);
     final playerGames = statsService.getPlayerGames(
       playerId: playerId,
@@ -754,7 +734,8 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
 
           final isPlayerInTeam1 =
               game.team1Player1 == playerId || game.team1Player2 == playerId;
-          final didWin = (isPlayerInTeam1 && game.winningTeam == 1) ||
+          final didWin =
+              (isPlayerInTeam1 && game.winningTeam == 1) ||
               (!isPlayerInTeam1 && game.winningTeam == 2);
 
           final formattedDate = intl.DateFormat('yyyy/MM/dd').format(game.date);
@@ -790,14 +771,16 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: game.winningTeam == 1
-                                ? Colors.green.withValues(alpha: 0.1)
-                                : Colors.grey.withValues(alpha: 0.1),
+                            color:
+                                game.winningTeam == 1
+                                    ? Colors.green.withValues(alpha: 0.1)
+                                    : Colors.grey.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: isPlayerInTeam1
-                                  ? Colors.purple
-                                  : Colors.transparent,
+                              color:
+                                  isPlayerInTeam1
+                                      ? Colors.purple
+                                      : Colors.transparent,
                               width: 2,
                             ),
                           ),
@@ -817,20 +800,25 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
                       ),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 8),
-                        child: Text('VS', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text(
+                          'VS',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: game.winningTeam == 2
-                                ? Colors.green.withValues(alpha: 0.1)
-                                : Colors.grey.withValues(alpha: 0.1),
+                            color:
+                                game.winningTeam == 2
+                                    ? Colors.green.withValues(alpha: 0.1)
+                                    : Colors.grey.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: !isPlayerInTeam1
-                                  ? Colors.purple
-                                  : Colors.transparent,
+                              color:
+                                  !isPlayerInTeam1
+                                      ? Colors.purple
+                                      : Colors.transparent,
                               width: 2,
                             ),
                           ),

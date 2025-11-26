@@ -2,8 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../providers/providers.dart';
+
 import '../models/player.dart';
+import '../providers/providers.dart';
 import 'new_game_page.dart';
 
 class GamesHistoryPage extends ConsumerStatefulWidget {
@@ -99,7 +100,7 @@ class _GamesHistoryPageState extends ConsumerState<GamesHistoryPage> {
                           filled: true,
                           fillColor: Colors.white,
                         ),
-                        value: _selectedPlayerId,
+                        initialValue: _selectedPlayerId,
                         items: [
                           const DropdownMenuItem(
                             value: null,
@@ -257,21 +258,28 @@ class _GamesHistoryPageState extends ConsumerState<GamesHistoryPage> {
                                             // Team 2
                                             Expanded(
                                               child: Container(
-                                                padding: const EdgeInsets.all(12),
+                                                padding: const EdgeInsets.all(
+                                                  12,
+                                                ),
                                                 decoration: BoxDecoration(
-                                                  color: game.winningTeam == 2
-                                                      ? Colors.green.withValues(
-                                                        alpha: 0.1,
-                                                      )
-                                                      : Colors.grey.withValues(
-                                                        alpha: 0.1,
-                                                      ),
+                                                  color:
+                                                      game.winningTeam == 2
+                                                          ? Colors.green
+                                                              .withValues(
+                                                                alpha: 0.1,
+                                                              )
+                                                          : Colors.grey
+                                                              .withValues(
+                                                                alpha: 0.1,
+                                                              ),
                                                   borderRadius:
                                                       BorderRadius.circular(12),
                                                   border: Border.all(
-                                                    color: game.winningTeam == 2
-                                                        ? Colors.green
-                                                        : Colors.transparent,
+                                                    color:
+                                                        game.winningTeam == 2
+                                                            ? Colors.green
+                                                            : Colors
+                                                                .transparent,
                                                     width: 2,
                                                   ),
                                                 ),
@@ -320,21 +328,28 @@ class _GamesHistoryPageState extends ConsumerState<GamesHistoryPage> {
                                             // Team 1
                                             Expanded(
                                               child: Container(
-                                                padding: const EdgeInsets.all(12),
+                                                padding: const EdgeInsets.all(
+                                                  12,
+                                                ),
                                                 decoration: BoxDecoration(
-                                                  color: game.winningTeam == 1
-                                                      ? Colors.green.withValues(
-                                                        alpha: 0.1,
-                                                      )
-                                                      : Colors.grey.withValues(
-                                                        alpha: 0.1,
-                                                      ),
+                                                  color:
+                                                      game.winningTeam == 1
+                                                          ? Colors.green
+                                                              .withValues(
+                                                                alpha: 0.1,
+                                                              )
+                                                          : Colors.grey
+                                                              .withValues(
+                                                                alpha: 0.1,
+                                                              ),
                                                   borderRadius:
                                                       BorderRadius.circular(12),
                                                   border: Border.all(
-                                                    color: game.winningTeam == 1
-                                                        ? Colors.green
-                                                        : Colors.transparent,
+                                                    color:
+                                                        game.winningTeam == 1
+                                                            ? Colors.green
+                                                            : Colors
+                                                                .transparent,
                                                     width: 2,
                                                   ),
                                                 ),
