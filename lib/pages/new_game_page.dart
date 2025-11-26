@@ -62,8 +62,9 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
         t1p2 == null ||
         t2p1 == null ||
         t2p2 == null ||
-        _winningTeam == null)
+        _winningTeam == null) {
       return;
+    }
 
     final game = Game(
       id: widget.gameToEdit!.id,
