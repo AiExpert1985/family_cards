@@ -1,17 +1,20 @@
 // ============== pages/home_page.dart ==============
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/providers.dart';
 import '../theme/app_theme.dart';
+import 'games_history_page.dart';
 import 'main_tab.dart';
 import 'settings_page.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends ConsumerState<HomePage> {
   int _currentIndex = 0;
 
   final _tabs = [
@@ -21,6 +24,12 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final gamesAsync = ref.watch(gamesProvider);
+    final gameCount = gamesAsync.maybeWhen(
+      data: (games) => games.length,
+      orElse: () => 0,
+    );
+
     return Scaffold(
       appBar: _currentIndex == 0
           ? AppBar(
@@ -35,6 +44,17 @@ class _HomePageState extends State<HomePage> {
               ),
               foregroundColor: Colors.white,
               elevation: 0,
+              leading: IconButton(
+                icon: Badge(
+                  label: Text('$gameCount'),
+                  backgroundColor: AppTheme.warningOrange,
+                  child: const Icon(Icons.history),
+                ),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const GamesHistoryPage()),
+                ),
+              ),
             )
           : AppBar(
               title: const Text(

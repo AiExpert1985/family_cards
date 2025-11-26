@@ -25,26 +25,11 @@ class MainTab extends StatelessWidget {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // App title/logo area
-                const Icon(
-                  Icons.style,
-                  size: 80,
-                  color: AppTheme.primaryPurple,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'لعبة الورق',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryPurple,
-                  ),
-                ),
-                const SizedBox(height: 48),
+                const Spacer(),
 
                 // Random Teams Button
                 _buildMainButton(
@@ -60,7 +45,7 @@ class MainTab extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
                 // Statistics Button
                 _buildMainButton(
@@ -75,19 +60,6 @@ class MainTab extends StatelessWidget {
                 ),
 
                 const Spacer(),
-
-                // History button (small)
-                TextButton.icon(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const GamesHistoryPage()),
-                  ),
-                  icon: const Icon(Icons.history, size: 20),
-                  label: const Text('سجل المباريات'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppTheme.warningOrange,
-                  ),
-                ),
               ],
             ),
           ),
@@ -103,11 +75,11 @@ class MainTab extends StatelessWidget {
           'تسجيل نتيجة',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: AppTheme.accentTeal,
+        backgroundColor: const Color(0xFFFFCA28), // Light amber
         foregroundColor: Colors.white,
         elevation: 6,
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
@@ -120,7 +92,7 @@ class MainTab extends StatelessWidget {
   }) {
     return Container(
       width: double.infinity,
-      height: 120,
+      height: 140,
       decoration: BoxDecoration(
         gradient: gradient,
         borderRadius: BorderRadius.circular(20),

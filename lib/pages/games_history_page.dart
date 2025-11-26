@@ -173,7 +173,6 @@ class _GamesHistoryPageState extends ConsumerState<GamesHistoryPage> {
                         padding: const EdgeInsets.all(8),
                         itemBuilder: (context, index) {
                           final game = games[index];
-                          final score = game.winningTeam == 1 ? '0-1' : '1-0';
 
                           return Card(
                             elevation: game.isKonkan ? 4 : 2,
@@ -255,78 +254,119 @@ class _GamesHistoryPageState extends ConsumerState<GamesHistoryPage> {
                                           mainAxisAlignment:
                                               MainAxisAlignment.end,
                                           children: [
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.end,
-                                              children: [
-                                                Text(
-                                                  _getPlayerName(
-                                                    players,
-                                                    game.team2Player1,
-                                                  ),
-                                                  style: const TextStyle(
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  _getPlayerName(
-                                                    players,
-                                                    game.team2Player2,
-                                                  ),
-                                                  style: const TextStyle(
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.w600,
+                                            // Team 2
+                                            Expanded(
+                                              child: Container(
+                                                padding: const EdgeInsets.all(12),
+                                                decoration: BoxDecoration(
+                                                  color: game.winningTeam == 2
+                                                      ? Colors.green.withValues(
+                                                        alpha: 0.1,
+                                                      )
+                                                      : Colors.grey.withValues(
+                                                        alpha: 0.1,
+                                                      ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  border: Border.all(
+                                                    color: game.winningTeam == 2
+                                                        ? Colors.green
+                                                        : Colors.transparent,
+                                                    width: 2,
                                                   ),
                                                 ),
-                                              ],
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.end,
+                                                  children: [
+                                                    Text(
+                                                      _getPlayerName(
+                                                        players,
+                                                        game.team2Player1,
+                                                      ),
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      _getPlayerName(
+                                                        players,
+                                                        game.team2Player2,
+                                                      ),
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
                                             ),
-                                            const SizedBox(width: 12),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 12,
-                                                    vertical: 8,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey.shade200,
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
+                                            const Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 8,
                                               ),
                                               child: Text(
-                                                score,
-                                                style: const TextStyle(
-                                                  fontSize: 18,
+                                                'VS',
+                                                style: TextStyle(
                                                   fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
                                                 ),
                                               ),
                                             ),
-                                            const SizedBox(width: 12),
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.end,
-                                              children: [
-                                                Text(
-                                                  _getPlayerName(
-                                                    players,
-                                                    game.team1Player1,
-                                                  ),
-                                                  style: const TextStyle(
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  _getPlayerName(
-                                                    players,
-                                                    game.team1Player2,
-                                                  ),
-                                                  style: const TextStyle(
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.w600,
+                                            // Team 1
+                                            Expanded(
+                                              child: Container(
+                                                padding: const EdgeInsets.all(12),
+                                                decoration: BoxDecoration(
+                                                  color: game.winningTeam == 1
+                                                      ? Colors.green.withValues(
+                                                        alpha: 0.1,
+                                                      )
+                                                      : Colors.grey.withValues(
+                                                        alpha: 0.1,
+                                                      ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  border: Border.all(
+                                                    color: game.winningTeam == 1
+                                                        ? Colors.green
+                                                        : Colors.transparent,
+                                                    width: 2,
                                                   ),
                                                 ),
-                                              ],
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.end,
+                                                  children: [
+                                                    Text(
+                                                      _getPlayerName(
+                                                        players,
+                                                        game.team1Player1,
+                                                      ),
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      _getPlayerName(
+                                                        players,
+                                                        game.team1Player2,
+                                                      ),
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
                                             ),
                                           ],
                                         ),
