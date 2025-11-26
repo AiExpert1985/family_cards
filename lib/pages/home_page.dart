@@ -1,7 +1,9 @@
 // ============== pages/home_page.dart ==============
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/providers.dart';
 import '../theme/app_theme.dart';
+import 'games_history_page.dart';
 import 'main_tab.dart';
 import 'settings_page.dart';
 
@@ -22,6 +24,12 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final gamesAsync = ref.watch(gamesProvider);
+    final gameCount = gamesAsync.maybeWhen(
+      data: (games) => games.length,
+      orElse: () => 0,
+    );
+
     String getTitle() {
       switch (_currentIndex) {
         case 0:
@@ -46,6 +54,19 @@ class _HomePageState extends ConsumerState<HomePage> {
         ),
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Badge(
+              label: Text('$gameCount'),
+              backgroundColor: AppTheme.warningOrange,
+              child: const Icon(Icons.history),
+            ),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const GamesHistoryPage()),
+            ),
+          ),
+        ],
       ),
       body: _tabs[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
