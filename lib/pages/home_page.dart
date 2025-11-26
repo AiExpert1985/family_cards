@@ -17,10 +17,7 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   int _currentIndex = 0;
 
-  final _tabs = [
-    const MainTab(),
-    const SettingsPage(),
-  ];
+  final _tabs = [const MainTab(), const SettingsPage()];
 
   @override
   Widget build(BuildContext context) {
@@ -48,22 +45,24 @@ class _HomePageState extends ConsumerState<HomePage> {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: AppTheme.primaryGradient,
-          ),
+          decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
         ),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: Badge(
-              label: Text('$gameCount'),
-              backgroundColor: AppTheme.warningOrange,
-              child: const Icon(Icons.history),
-            ),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const GamesHistoryPage()),
+          Padding(
+            padding: const EdgeInsets.only(right: 16), // move left
+            child: IconButton(
+              icon: Badge(
+                label: Text('$gameCount'),
+                backgroundColor: AppTheme.warningOrange,
+                child: const Icon(Icons.history),
+              ),
+              onPressed:
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const GamesHistoryPage()),
+                  ),
             ),
           ),
         ],
@@ -75,10 +74,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         selectedItemColor: AppTheme.accentTeal,
         unselectedItemColor: Colors.grey,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'الرئيسية',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'الرئيسية'),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: 'الإعدادات',
