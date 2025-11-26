@@ -19,6 +19,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   final _tabs = [
     const MainTab(),
+    const GamesHistoryPage(),
     const SettingsPage(),
   ];
 
@@ -30,54 +31,56 @@ class _HomePageState extends ConsumerState<HomePage> {
       orElse: () => 0,
     );
 
+    String getTitle() {
+      switch (_currentIndex) {
+        case 0:
+          return 'لعبة الورق';
+        case 1:
+          return 'سجل المباريات';
+        case 2:
+          return 'الإعدادات';
+        default:
+          return 'لعبة الورق';
+      }
+    }
+
     return Scaffold(
-      appBar: _currentIndex == 0
-          ? AppBar(
-              title: const Text(
-                'لعبة الورق',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              flexibleSpace: Container(
-                decoration: const BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
-                ),
-              ),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              leading: IconButton(
-                icon: Badge(
-                  label: Text('$gameCount'),
-                  backgroundColor: AppTheme.warningOrange,
-                  child: const Icon(Icons.history),
-                ),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const GamesHistoryPage()),
-                ),
-              ),
-            )
-          : AppBar(
-              title: const Text(
-                'الإعدادات',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              flexibleSpace: Container(
-                decoration: const BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
-                ),
-              ),
-              foregroundColor: Colors.white,
-              elevation: 0,
-            ),
+      appBar: AppBar(
+        title: Text(
+          getTitle(),
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: AppTheme.primaryGradient,
+          ),
+        ),
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
       body: _tabs[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         selectedItemColor: AppTheme.accentTeal,
         unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'الرئيسية'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'الإعدادات'),
+        items: [
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'الرئيسية',
+          ),
+          BottomNavigationBarItem(
+            icon: Badge(
+              label: Text('$gameCount'),
+              backgroundColor: AppTheme.warningOrange,
+              child: const Icon(Icons.history),
+            ),
+            label: 'السجل',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'الإعدادات',
+          ),
         ],
       ),
     );

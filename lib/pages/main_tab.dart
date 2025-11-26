@@ -65,19 +65,15 @@ class MainTab extends StatelessWidget {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const NewGamePage()),
         ),
-        icon: const Icon(Icons.add),
-        label: const Text(
-          'تسجيل نتيجة',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
         backgroundColor: const Color(0xFFFFCA28), // Light amber
         foregroundColor: Colors.white,
         elevation: 6,
+        child: const Icon(Icons.add, size: 28),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );

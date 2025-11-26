@@ -175,7 +175,7 @@ class _NewGamePageState extends ConsumerState<NewGamePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.gameToEdit != null ? 'تعديل المباراة' : 'لعبة جديدة'),
+        title: Text(widget.gameToEdit != null ? 'تعديل المباراة' : 'اضافة نتيجة مباراة'),
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
       ),
