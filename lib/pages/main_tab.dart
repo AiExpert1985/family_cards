@@ -1,16 +1,24 @@
 // ============== pages/main_tab.dart ==============
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_theme.dart';
+import '../providers/providers.dart';
 import 'games_history_page.dart';
 import 'new_game_page.dart';
 import 'random_teams_page.dart';
 import 'statistics_page.dart';
 
-class MainTab extends StatelessWidget {
+class MainTab extends ConsumerWidget {
   const MainTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final gamesAsync = ref.watch(gamesProvider);
+    final gameCount = gamesAsync.maybeWhen(
+      data: (games) => games.length,
+      orElse: () => 0,
+    );
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -24,44 +32,88 @@ class MainTab extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(),
+          child: Stack(
+            children: [
+              // Main content
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Spacer(),
 
-                // Random Teams Button
-                _buildMainButton(
-                  context: context,
-                  icon: Icons.shuffle,
-                  label: 'قرعة اللاعبين',
-                  gradient: const LinearGradient(
-                    colors: [AppTheme.accentTeal, Color(0xFF26C6DA)],
-                  ),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const RandomTeamsPage()),
+                    // Random Teams Button
+                    _buildMainButton(
+                      context: context,
+                      icon: Icons.shuffle,
+                      label: 'قرعة اللاعبين',
+                      gradient: const LinearGradient(
+                        colors: [AppTheme.accentTeal, Color(0xFF26C6DA)],
+                      ),
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const RandomTeamsPage()),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Statistics Button
+                    _buildMainButton(
+                      context: context,
+                      icon: Icons.bar_chart,
+                      label: 'الإحصائيات',
+                      gradient: AppTheme.primaryGradient,
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const StatisticsPage()),
+                      ),
+                    ),
+
+                    const Spacer(),
+                  ],
+                ),
+              ),
+
+              // History icon at top left
+              Positioned(
+                top: 16,
+                left: 16,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const GamesHistoryPage()),
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Badge(
+                        label: Text('$gameCount'),
+                        backgroundColor: AppTheme.warningOrange,
+                        child: const Icon(
+                          Icons.history,
+                          color: AppTheme.warningOrange,
+                          size: 28,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-
-                const SizedBox(height: 24),
-
-                // Statistics Button
-                _buildMainButton(
-                  context: context,
-                  icon: Icons.bar_chart,
-                  label: 'الإحصائيات',
-                  gradient: AppTheme.primaryGradient,
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const StatisticsPage()),
-                  ),
-                ),
-
-                const Spacer(),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -75,7 +127,7 @@ class MainTab extends StatelessWidget {
         elevation: 6,
         child: const Icon(Icons.add, size: 28),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );
   }
 
