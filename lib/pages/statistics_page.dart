@@ -1,4 +1,5 @@
 // ============== pages/statistics_page.dart ==============
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,7 +7,12 @@ import '../models/game.dart';
 import '../models/player.dart';
 import '../models/player_stats.dart';
 import '../providers/providers.dart';
+import '../theme/app_theme.dart';
+import '../widgets/animations/animated_card.dart';
+import '../widgets/animations/animated_counter.dart';
+import '../widgets/animations/animated_progress_bar.dart';
 import '../widgets/common/empty_state.dart';
+import '../widgets/common/modern_tab_indicator.dart';
 import 'package:intl/intl.dart' as intl;
 
 class StatisticsPage extends ConsumerWidget {
@@ -22,13 +28,33 @@ class StatisticsPage extends ConsumerWidget {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('الإحصائيات'),
-          backgroundColor: Colors.purple,
+          title: const Text(
+            'الإحصائيات',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+            ),
+          ),
           foregroundColor: Colors.white,
-          bottom: const TabBar(
-            labelColor: Colors.amber,
-            isScrollable: true,
-            tabs: [
+          bottom: TabBar(
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            labelStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.normal,
+            ),
+            indicator: ModernTabIndicator(
+              color: AppTheme.accentTeal,
+              height: 3,
+              radius: 2,
+            ),
+            tabs: const [
               Tab(text: 'عام'),
               Tab(text: 'يومي'),
               Tab(text: 'الابطال'),
@@ -253,47 +279,121 @@ class StatisticsPage extends ConsumerWidget {
     PlayerStats stat,
     int rank,
   ) {
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-      child: InkWell(
-        onTap: () => _showPlayerDetailsBottomSheet(context, ref, stat.playerId),
-        borderRadius: BorderRadius.circular(12),
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: _getRankColor(rank),
-            child: Text(
-              '$rank',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+    return AnimatedCard(
+      onTap: () => _showPlayerDetailsBottomSheet(context, ref, stat.playerId),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                // Animated circular progress around rank
+                AnimatedCircularProgress(
+                  percentage: stat.winRate,
+                  color: AppTheme.getWinRateColor(stat.winRate),
+                  child: CircleAvatar(
+                    backgroundColor: AppTheme.getRankColor(rank),
+                    child: Text(
+                      '$rank',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Player info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        stat.name,
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            'خسائر: ',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 13,
+                            ),
+                          ),
+                          AnimatedCounter(
+                            value: stat.lost,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 13,
+                            ),
+                          ),
+                          Text(
+                            ' • انتصارات: ',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 13,
+                            ),
+                          ),
+                          AnimatedCounter(
+                            value: stat.won,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Win rate badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.getWinRateColor(stat.winRate),
+                        AppTheme.getWinRateColor(stat.winRate).withValues(alpha: 0.8),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.getWinRateColor(stat.winRate)
+                            .withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: AnimatedPercentage(
+                    value: stat.winRate,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-          title: Text(
-            stat.name,
-            textAlign: TextAlign.right,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          subtitle: Text(
-            'انتصارات: ${stat.won} • خسائر: ${stat.lost}',
-            textAlign: TextAlign.right,
-          ),
-          trailing: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: _getWinRateColor(stat.winRate),
-              borderRadius: BorderRadius.circular(12),
+            const SizedBox(height: 8),
+            // Animated progress bar
+            AnimatedProgressBar(
+              value: stat.winRate,
+              color: AppTheme.getWinRateColor(stat.winRate),
+              height: 6,
             ),
-            child: Text(
-              stat.winRateText,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ),
+          ],
         ),
       ),
     );
@@ -369,25 +469,6 @@ class StatisticsPage extends ConsumerWidget {
         ?.toLocal();
   }
 
-  Color _getRankColor(int rank) {
-    switch (rank) {
-      case 1:
-        return Colors.amber;
-      case 2:
-        return Colors.grey;
-      case 3:
-        return Colors.brown;
-      default:
-        return Colors.blue;
-    }
-  }
-
-  Color _getWinRateColor(double winRate) {
-    if (winRate >= 70) return Colors.green;
-    if (winRate >= 50) return Colors.orange;
-    return Colors.red;
-  }
-
   List<int> _calculateRanks(List<PlayerStats> stats) {
     final ranks = <int>[];
     int? previousPercentage;
@@ -416,18 +497,35 @@ class StatisticsPage extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        builder: (context, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: _PlayerDetailsBottomSheet(
-            playerId: playerId,
-            scrollController: scrollController,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) => Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Theme.of(context).colorScheme.surface,
+                  Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
+                ],
+              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: _PlayerDetailsBottomSheet(
+              playerId: playerId,
+              scrollController: scrollController,
+            ),
           ),
         ),
       ),
@@ -471,19 +569,43 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
               ),
               Padding(
                 padding: const EdgeInsets.all(16),
-                child: Text(
-                  player.name,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Column(
+                  children: [
+                    Text(
+                      player.name,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'تفاصيل اللاعب',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const TabBar(
-                labelColor: Colors.purple,
+              TabBar(
+                labelColor: AppTheme.primaryPurple,
                 unselectedLabelColor: Colors.grey,
-                indicatorColor: Colors.purple,
-                tabs: [
+                labelStyle: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.normal,
+                ),
+                indicator: ModernTabIndicator(
+                  color: AppTheme.accentTeal,
+                  height: 3,
+                  radius: 2,
+                ),
+                tabs: const [
                   Tab(text: 'خصوم'),
                   Tab(text: 'شركاء'),
                   Tab(text: 'لعبات'),
@@ -551,7 +673,7 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: _getWinRateColor(stat.winRate),
+                  color: AppTheme.getWinRateColor(stat.winRate),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -609,7 +731,7 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: _getWinRateColor(stat.winRate),
+                  color: AppTheme.getWinRateColor(stat.winRate),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -767,11 +889,5 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
         },
       ),
     );
-  }
-
-  Color _getWinRateColor(double winRate) {
-    if (winRate >= 70) return Colors.green;
-    if (winRate >= 50) return Colors.orange;
-    return Colors.red;
   }
 }
