@@ -14,7 +14,15 @@ class StatisticsService {
     required List<Game> games,
   }) {
     final filteredGames = games.where((game) => _isSameDay(game.date, date)).toList();
-    return _calculateStats(players: players, games: filteredGames);
+    return _calculateStats(
+      players: players,
+      games: filteredGames,
+      sort: (a, b) {
+        final winsComparison = b.won.compareTo(a.won);
+        if (winsComparison != 0) return winsComparison;
+        return b.winRate.compareTo(a.winRate);
+      },
+    );
   }
 
   List<FirstPlaceStats> calculateFirstPlaceStats({
@@ -245,6 +253,7 @@ class StatisticsService {
   List<PlayerStats> _calculateStats({
     required List<Player> players,
     required List<Game> games,
+    int Function(PlayerStats a, PlayerStats b)? sort,
   }) {
     final statsMap = <String, _StatsAccumulator>{};
 
@@ -270,18 +279,17 @@ class StatisticsService {
     }
 
     // Convert to PlayerStats and sort
-    final stats =
-        statsMap.values
-            .map(
-              (acc) => PlayerStats(
-                playerId: acc.playerId,
-                name: acc.name,
-                played: acc.played,
-                won: acc.won,
-              ),
-            )
-            .toList()
-          ..sort((a, b) => b.winRate.compareTo(a.winRate));
+    final stats = statsMap.values
+        .map(
+          (acc) => PlayerStats(
+            playerId: acc.playerId,
+            name: acc.name,
+            played: acc.played,
+            won: acc.won,
+          ),
+        )
+        .toList()
+      ..sort(sort ?? (a, b) => b.winRate.compareTo(a.winRate));
 
     return stats;
   }

@@ -74,6 +74,7 @@ class StatisticsPage extends ConsumerWidget {
               statsAsync: dailyStatsAsync,
               emptyMessage: 'لا توجد مباريات في هذا اليوم',
               header: _buildDateSelector(context, ref, selectedDate),
+              rankByWins: true,
             ),
             _buildFirstPlaceTab(context, ref),
           ],
@@ -88,6 +89,7 @@ class StatisticsPage extends ConsumerWidget {
     required AsyncValue<List<PlayerStats>> statsAsync,
     required String emptyMessage,
     Widget? header,
+    bool rankByWins = false,
   }) {
     return Column(
       children: [
@@ -104,7 +106,7 @@ class StatisticsPage extends ConsumerWidget {
                 );
               }
 
-              final ranks = _calculateRanks(stats);
+              final ranks = _calculateRanks(stats, rankByWins: rankByWins);
 
               return ListView.builder(
                 itemCount: stats.length,
@@ -423,19 +425,24 @@ class StatisticsPage extends ConsumerWidget {
         ?.toLocal();
   }
 
-  List<int> _calculateRanks(List<PlayerStats> stats) {
+  List<int> _calculateRanks(List<PlayerStats> stats, {bool rankByWins = false}) {
     final ranks = <int>[];
+    int? previousWins;
     int? previousPercentage;
     var uniqueRank = 0;
 
     for (var i = 0; i < stats.length; i++) {
       final currentPercentage = stats[i].winRate.round();
-      final rank =
-          previousPercentage != null && currentPercentage == previousPercentage
-              ? uniqueRank
-              : ++uniqueRank;
+      final currentWins = stats[i].won;
+      final isSameRank = rankByWins
+          ? previousWins != null &&
+              currentWins == previousWins &&
+              currentPercentage == previousPercentage
+          : previousPercentage != null && currentPercentage == previousPercentage;
+      final rank = isSameRank ? uniqueRank : ++uniqueRank;
 
       ranks.add(rank);
+      previousWins = currentWins;
       previousPercentage = currentPercentage;
     }
 
