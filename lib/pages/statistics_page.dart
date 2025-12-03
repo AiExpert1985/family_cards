@@ -637,7 +637,11 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
       games: games,
     );
 
-    if (headToHeadStats.isEmpty) {
+    final filteredStats = filterBySelectedDate
+        ? headToHeadStats.where((stat) => stat.played > 0).toList()
+        : headToHeadStats;
+
+    if (filteredStats.isEmpty) {
       return const Center(
         child: EmptyState(
           icon: Icons.sports_kabaddi,
@@ -650,10 +654,10 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
       textDirection: TextDirection.rtl,
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
-        itemCount: headToHeadStats.length,
+        itemCount: filteredStats.length,
         separatorBuilder: (_, __) => const SizedBox(height: 8),
         itemBuilder: (context, index) {
-          final stat = headToHeadStats[index];
+          final stat = filteredStats[index];
           return Card(
             elevation: 2,
             child: ListTile(
@@ -694,7 +698,11 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
       games: games,
     );
 
-    if (teammateStats.isEmpty) {
+    final filteredStats = filterBySelectedDate
+        ? teammateStats.where((stat) => stat.played > 0).toList()
+        : teammateStats;
+
+    if (filteredStats.isEmpty) {
       return const Center(
         child: EmptyState(
           icon: Icons.handshake,
@@ -707,10 +715,10 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
       textDirection: TextDirection.rtl,
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
-        itemCount: teammateStats.length,
+        itemCount: filteredStats.length,
         separatorBuilder: (_, __) => const SizedBox(height: 8),
         itemBuilder: (context, index) {
-          final stat = teammateStats[index];
+          final stat = filteredStats[index];
           return Card(
             elevation: 2,
             child: ListTile(
