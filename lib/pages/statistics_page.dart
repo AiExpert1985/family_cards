@@ -75,6 +75,7 @@ class StatisticsPage extends ConsumerWidget {
               emptyMessage: 'لا توجد مباريات في هذا اليوم',
               header: _buildDateSelector(context, ref, selectedDate),
               rankByWins: true,
+              filterBottomSheetBySelectedDate: true,
             ),
             _buildFirstPlaceTab(context, ref),
           ],
@@ -90,6 +91,7 @@ class StatisticsPage extends ConsumerWidget {
     required String emptyMessage,
     Widget? header,
     bool rankByWins = false,
+    bool filterBottomSheetBySelectedDate = false,
   }) {
     return Column(
       children: [
@@ -114,7 +116,13 @@ class StatisticsPage extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final stat = stats[index];
                   final rank = ranks[index];
-                  return _buildStatCard(context, ref, stat, rank);
+                  return _buildStatCard(
+                    context,
+                    ref,
+                    stat,
+                    rank,
+                    filterBottomSheetBySelectedDate,
+                  );
                 },
               );
             },
@@ -152,31 +160,31 @@ class StatisticsPage extends ConsumerWidget {
         }
 
         return gamesAsync.when(
-          data: (games) {
-            final statsService = ref.watch(statisticsServiceProvider);
-            final firstPlaceStats = statsService.calculateFirstPlaceStats(
-              players: players,
-              games: games,
-            );
-
-            if (firstPlaceStats.isEmpty) {
-              return Center(
-                child: EmptyState(
-                  icon: Icons.emoji_events,
-                  message: 'لا توجد إحصائيات.',
-                ),
+            data: (games) {
+              final statsService = ref.watch(statisticsServiceProvider);
+              final firstPlaceStats = statsService.calculateFirstPlaceStats(
+                players: players,
+                games: games,
               );
-            }
 
-            return ListView.builder(
-              itemCount: firstPlaceStats.length,
-              padding: const EdgeInsets.all(8),
-              itemBuilder: (context, index) {
-                final stat = firstPlaceStats[index];
-                return _buildFirstPlaceCard(stat);
-              },
-            );
-          },
+              if (firstPlaceStats.isEmpty) {
+                return Center(
+                  child: EmptyState(
+                    icon: Icons.emoji_events,
+                    message: 'لا توجد إحصائيات.',
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                itemCount: firstPlaceStats.length,
+                padding: const EdgeInsets.all(8),
+                itemBuilder: (context, index) {
+                  final stat = firstPlaceStats[index];
+                  return _buildFirstPlaceCard(stat);
+                },
+              );
+            },
           loading: () => const Center(child: CircularProgressIndicator()),
           error:
               (error, _) => Center(child: Text('حدث خطأ: ${error.toString()}')),
@@ -257,9 +265,15 @@ class StatisticsPage extends ConsumerWidget {
     WidgetRef ref,
     PlayerStats stat,
     int rank,
+    bool filterBottomSheetBySelectedDate,
   ) {
     return AnimatedCard(
-      onTap: () => _showPlayerDetailsBottomSheet(context, ref, stat.playerId),
+      onTap: () => _showPlayerDetailsBottomSheet(
+        context,
+        ref,
+        stat.playerId,
+        filterBottomSheetBySelectedDate,
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
@@ -453,6 +467,7 @@ class StatisticsPage extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     String playerId,
+    bool filterBySelectedDate,
   ) {
     showModalBottomSheet(
       context: context,
@@ -491,6 +506,7 @@ class StatisticsPage extends ConsumerWidget {
                     ),
                     child: _PlayerDetailsBottomSheet(
                       playerId: playerId,
+                      filterBySelectedDate: filterBySelectedDate,
                       scrollController: scrollController,
                     ),
                   ),
@@ -502,10 +518,12 @@ class StatisticsPage extends ConsumerWidget {
 
 class _PlayerDetailsBottomSheet extends ConsumerWidget {
   final String playerId;
+  final bool filterBySelectedDate;
   final ScrollController scrollController;
 
   const _PlayerDetailsBottomSheet({
     required this.playerId,
+    required this.filterBySelectedDate,
     required this.scrollController,
   });
 
@@ -513,6 +531,9 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final playersAsync = ref.watch(playersProvider);
     final gamesAsync = ref.watch(gamesProvider);
+    final selectedDate = filterBySelectedDate
+        ? ref.watch(selectedStatisticsDateProvider)
+        : null;
 
     return playersAsync.when(
       data: (players) {
@@ -569,13 +590,27 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
               Expanded(
                 child: gamesAsync.when(
                   data:
-                      (games) => TabBarView(
-                        children: [
-                          _buildAgainstTab(ref, players, games),
-                          _buildWithTab(ref, players, games),
-                          _buildGamesTab(ref, players, games),
-                        ],
-                      ),
+                      (games) {
+                        final relevantGames =
+                            filterBySelectedDate && selectedDate != null
+                                ? games
+                                    .where(
+                                      (game) => DateUtils.isSameDay(
+                                        game.date.toLocal(),
+                                        selectedDate.toLocal(),
+                                      ),
+                                    )
+                                    .toList()
+                                : games;
+
+                        return TabBarView(
+                          children: [
+                            _buildAgainstTab(ref, players, relevantGames),
+                            _buildWithTab(ref, players, relevantGames),
+                            _buildGamesTab(ref, players, relevantGames),
+                          ],
+                        );
+                      },
                   loading:
                       () => const Center(child: CircularProgressIndicator()),
                   error: (error, _) => Center(child: Text('خطأ: $error')),
