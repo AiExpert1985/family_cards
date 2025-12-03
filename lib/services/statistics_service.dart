@@ -289,7 +289,14 @@ class StatisticsService {
           ),
         )
         .toList()
-      ..sort(sort ?? (a, b) => b.winRate.compareTo(a.winRate));
+      ..sort(
+        sort ??
+            (a, b) {
+              final rateCompare = b.winRate.compareTo(a.winRate);
+              if (rateCompare != 0) return rateCompare;
+              return b.played.compareTo(a.played);
+            },
+      );
 
     return stats;
   }
