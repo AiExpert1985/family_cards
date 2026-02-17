@@ -1,7 +1,6 @@
 // ============== pages/main_tab.dart ==============
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import 'new_game_page.dart';
 import 'random_teams_page.dart';
 import 'statistics_page.dart';
 
@@ -16,10 +15,7 @@ class MainTab extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF5F7FA),
-              Color(0xFFFFFFFF),
-            ],
+            colors: [Color(0xFFF5F7FA), Color(0xFFFFFFFF)],
           ),
         ),
         child: SafeArea(
@@ -38,10 +34,13 @@ class MainTab extends StatelessWidget {
                   gradient: const LinearGradient(
                     colors: [AppTheme.accentTeal, Color(0xFF26C6DA)],
                   ),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const RandomTeamsPage()),
-                  ),
+                  onPressed:
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RandomTeamsPage(),
+                        ),
+                      ),
                 ),
 
                 const SizedBox(height: 24),
@@ -52,10 +51,13 @@ class MainTab extends StatelessWidget {
                   icon: Icons.bar_chart,
                   label: 'الإحصائيات',
                   gradient: AppTheme.primaryGradient,
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const StatisticsPage()),
-                  ),
+                  onPressed:
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const StatisticsPage(),
+                        ),
+                      ),
                 ),
 
                 const Spacer(),
@@ -64,17 +66,6 @@ class MainTab extends StatelessWidget {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const NewGamePage()),
-        ),
-        backgroundColor: const Color(0xFFFFCA28), // Light amber
-        foregroundColor: Colors.white,
-        elevation: 6,
-        child: const Icon(Icons.add, size: 28),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );
   }
 
@@ -109,11 +100,7 @@ class MainTab extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  icon,
-                  size: 48,
-                  color: Colors.white,
-                ),
+                Icon(icon, size: 48, color: Colors.white),
                 const SizedBox(width: 16),
                 Text(
                   label,

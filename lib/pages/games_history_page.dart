@@ -77,6 +77,18 @@ class _GamesHistoryPageState extends ConsumerState<GamesHistoryPage> {
         title: const Text('سجل المباريات'),
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            onPressed:
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NewGamePage()),
+                ),
+            icon: const Icon(Icons.add),
+            iconSize: 28,
+            tooltip: 'إضافة مباراة جديدة',
+          ),
+        ],
       ),
       body: Column(
         children: [
