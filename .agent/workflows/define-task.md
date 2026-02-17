@@ -1,6 +1,7 @@
 ---
 description: Creates a new Obelisk task
 ---
+
 ## Required Files
 
 - `/obelisk/contracts/contracts-summary.md`
@@ -73,6 +74,7 @@ Before starting discovery, assess whether the task qualifies as a hotfix.
 
 **If criteria met:**
 - Output: "Detected simple fix. Running hotfix path."
+- Hotfix is a special execution path and is allowed to execute immediately from this workflow.
 - Call `obelisk/internal/hotfix.md` with task_description
 - STOP
 
@@ -335,4 +337,3 @@ Output EXACTLY this block. No additions.
 - Execute: `/run-task`
 - Edit: modify `/obelisk/workspace/active-task.md`, then run `/run-task`
 ```
-
