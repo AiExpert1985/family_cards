@@ -465,7 +465,6 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
 
     for (int i = 0; i < _result!.teams.length; i += 2) {
       if (i + 1 < _result!.teams.length) {
-        final matchNumber = (i ~/ 2) + 1;
         final color = colors[i ~/ 2 % colors.length];
 
         if (i > 0) {
@@ -527,22 +526,6 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
     }
 
     return matches;
-  }
-
-  String _getArabicNumber(int number) {
-    const arabicNumbers = [
-      'الأولى',
-      'الثانية',
-      'الثالثة',
-      'الرابعة',
-      'الخامسة',
-      'السادسة',
-      'السابعة',
-      'الثامنة',
-    ];
-    return number <= arabicNumbers.length
-        ? arabicNumbers[number - 1]
-        : '$number';
   }
 
   void _navigateToNewGame(List<Player> team1, List<Player> team2) async {
