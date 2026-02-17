@@ -5,12 +5,23 @@ import '../models/player.dart';
 import '../models/game.dart';
 import '../models/player_stats.dart';
 import '../services/storage_service.dart';
+import '../services/fairness_service.dart';
 import '../services/team_generator_service.dart';
 import '../services/statistics_service.dart';
 
 // Services
 final storageServiceProvider = Provider((ref) => StorageService());
-final teamGeneratorServiceProvider = Provider((ref) => TeamGeneratorService());
+final fairnessServiceProvider = Provider((ref) => FairnessService());
+final teamGeneratorServiceProvider = Provider((ref) {
+  final fairnessService = ref.watch(fairnessServiceProvider);
+  final gamesAsync = ref.watch(gamesProvider);
+  final games = gamesAsync.value ?? [];
+
+  return TeamGeneratorService(
+    fairnessService: fairnessService,
+    allGames: games,
+  );
+});
 final statisticsServiceProvider = Provider((ref) => StatisticsService());
 
 // Players State
@@ -159,7 +170,8 @@ class GamesNotifier extends StateNotifier<AsyncValue<List<Game>>> {
     final storedGames = await _storage.getGames();
     final gamesToUpdate = storedGames.isNotEmpty ? storedGames : currentGames;
 
-    final updatedGames = gamesToUpdate.map((g) => g.id == game.id ? game : g).toList();
+    final updatedGames =
+        gamesToUpdate.map((g) => g.id == game.id ? game : g).toList();
     final success = await _storage.saveGames(updatedGames);
 
     if (success) {
@@ -194,7 +206,9 @@ final statisticsProvider = Provider<AsyncValue<List<PlayerStats>>>((ref) {
   );
 });
 
-final selectedStatisticsDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
+final selectedStatisticsDateProvider = StateProvider<DateTime>(
+  (ref) => DateTime.now(),
+);
 final selectedHeadToHeadPlayerProvider = StateProvider<String?>((ref) => null);
 final selectedTeammatePlayerProvider = StateProvider<String?>((ref) => null);
 
@@ -205,19 +219,21 @@ final dailyStatisticsProvider = Provider<AsyncValue<List<PlayerStats>>>((ref) {
   final statsService = ref.watch(statisticsServiceProvider);
 
   return playersAsync.when(
-    data: (players) => gamesAsync.when(
-      data: (games) {
-        final stats = statsService.calculateDailyStats(
-          date: selectedDate,
-          players: players,
-          games: games,
-        );
-        final filteredStats = stats.where((stat) => stat.played > 0).toList();
-        return AsyncValue.data(filteredStats);
-      },
-      loading: () => const AsyncValue.loading(),
-      error: (e, stack) => AsyncValue.error(e, stack),
-    ),
+    data:
+        (players) => gamesAsync.when(
+          data: (games) {
+            final stats = statsService.calculateDailyStats(
+              date: selectedDate,
+              players: players,
+              games: games,
+            );
+            final filteredStats =
+                stats.where((stat) => stat.played > 0).toList();
+            return AsyncValue.data(filteredStats);
+          },
+          loading: () => const AsyncValue.loading(),
+          error: (e, stack) => AsyncValue.error(e, stack),
+        ),
     loading: () => const AsyncValue.loading(),
     error: (e, stack) => AsyncValue.error(e, stack),
   );

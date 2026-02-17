@@ -1,25 +1,7 @@
-# Design Summary
+## Fair Balance Team Generation | 2026-02-17
 
-Generated: 2026-02-17
-
-## System Architecture
-_(empty — populated after maintenance)_
-
-## Data Model
-_(empty — populated after maintenance)_
-
-## Core Design Principles
-_(empty — populated after maintenance)_
-
-## Modules
-_(empty — populated after maintenance)_
-
-## Open Design Questions
-_(empty — populated after maintenance)_
-
-## Unprocessed
-
-## 2026-02-17 | Implement Fair Balance Team Generation
+**Summary:**
+Enhance team generation to prefer least-played-together partnerships based on global game history while maintaining daily non-repetition.
 
 **Architecture / Design:**
 - Generate-and-pick-best approach: create 3-5 match options, score by fairness, select best
@@ -31,4 +13,5 @@ _(empty — populated after maintenance)_
 - Soft preference: Global historical partnership counts guide selection
 - Fairness convergence over time as core system behavior
 
----
+**Deferred:**
+None

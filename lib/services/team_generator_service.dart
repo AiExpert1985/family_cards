@@ -1,11 +1,24 @@
 import 'dart:math';
 
 // ============== services/team_generator_service.dart ==============
+import '../models/game.dart';
 import '../models/player.dart';
 import '../models/team_generation_result.dart';
+import 'fairness_service.dart';
 
 class TeamGeneratorService {
   static const int _maxRandomRetries = 50;
+  static const int _candidateCount =
+      5; // Number of candidates to generate for fairness evaluation
+
+  final FairnessService _fairnessService;
+  final List<Game> _allGames;
+
+  TeamGeneratorService({
+    required FairnessService fairnessService,
+    required List<Game> allGames,
+  }) : _fairnessService = fairnessService,
+       _allGames = allGames;
 
   TeamGenerationResult generateTeams({
     required List<Player> allPlayers,
@@ -22,7 +35,8 @@ class TeamGeneratorService {
 
     final random = Random(DateTime.now().microsecondsSinceEpoch);
 
-    final selectedPlayers = allPlayers.where((p) => selectedPlayerIds.contains(p.id)).toList();
+    final selectedPlayers =
+        allPlayers.where((p) => selectedPlayerIds.contains(p.id)).toList();
 
     final totalSelected = selectedPlayers.length;
     final restingCount = totalSelected % 4 == 0 ? 0 : totalSelected % 4;
@@ -31,7 +45,8 @@ class TeamGeneratorService {
       return _generateTeamsWithRetry(selectedPlayers, [], random, allPlayers);
     }
 
-    final notRestedYet = selectedPlayers.where((p) => !restedPlayerIds.contains(p.id)).toList();
+    final notRestedYet =
+        selectedPlayers.where((p) => !restedPlayerIds.contains(p.id)).toList();
 
     final restingPlayers = <Player>[];
 
@@ -52,9 +67,16 @@ class TeamGeneratorService {
     }
 
     final playingPlayers =
-        selectedPlayers.where((p) => !restingPlayers.any((resting) => resting.id == p.id)).toList();
+        selectedPlayers
+            .where((p) => !restingPlayers.any((resting) => resting.id == p.id))
+            .toList();
 
-    return _generateTeamsWithRetry(playingPlayers, restingPlayers, random, allPlayers);
+    return _generateTeamsWithRetry(
+      playingPlayers,
+      restingPlayers,
+      random,
+      allPlayers,
+    );
   }
 
   TeamGenerationResult _generateTeamsWithRetry(
@@ -63,6 +85,11 @@ class TeamGeneratorService {
     Random random,
     List<Player> allPlayers,
   ) {
+    // Build partnership matrix from all historical games
+    final partnershipMatrix = _fairnessService.buildPartnershipMatrix(
+      _allGames,
+    );
+
     // Try random shuffles first
     for (int attempt = 0; attempt < _maxRandomRetries; attempt++) {
       final shuffled = List<Player>.from(playingPlayers)..shuffle(random);
@@ -75,17 +102,68 @@ class TeamGeneratorService {
       }
 
       if (!_hasRepeatedPairings(teams)) {
-        final updatedPlayers = _updatePlayerPairings(teams, allPlayers);
+        // Generate multiple candidates and pick the fairest
+        final candidates = <List<List<Player>>>[];
+        final scores = <int>[];
+
+        // Add the first valid candidate
+        candidates.add(teams);
+        scores.add(
+          _fairnessService.scoreTeamConfiguration(teams, partnershipMatrix),
+        );
+
+        // Generate additional candidates
+        for (int i = 1; i < _candidateCount; i++) {
+          final candidateShuffled = List<Player>.from(playingPlayers)
+            ..shuffle(random);
+          final candidateTeams = <List<Player>>[];
+
+          for (int j = 0; j < candidateShuffled.length; j += 2) {
+            if (j + 1 < candidateShuffled.length) {
+              candidateTeams.add([
+                candidateShuffled[j],
+                candidateShuffled[j + 1],
+              ]);
+            }
+          }
+
+          if (!_hasRepeatedPairings(candidateTeams)) {
+            candidates.add(candidateTeams);
+            scores.add(
+              _fairnessService.scoreTeamConfiguration(
+                candidateTeams,
+                partnershipMatrix,
+              ),
+            );
+          }
+        }
+
+        // Pick the candidate with the lowest score (fairest)
+        int bestIndex = 0;
+        int bestScore = scores[0];
+        for (int i = 1; i < scores.length; i++) {
+          if (scores[i] < bestScore) {
+            bestScore = scores[i];
+            bestIndex = i;
+          }
+        }
+
+        final bestTeams = candidates[bestIndex];
+        final updatedPlayers = _updatePlayerPairings(bestTeams, allPlayers);
         return TeamGenerationResult(
-          teams: teams,
+          teams: bestTeams,
           restingPlayers: restingPlayers,
           updatedPlayers: updatedPlayers,
         );
       }
     }
 
-    // Use least-used pairings algorithm with randomization
-    final teams = _generateLeastUsedPairings(playingPlayers, random);
+    // Use least-used pairings algorithm with global historical counts
+    final teams = _generateLeastUsedPairings(
+      playingPlayers,
+      partnershipMatrix,
+      random,
+    );
     final updatedPlayers = _updatePlayerPairings(teams, allPlayers);
     return TeamGenerationResult(
       teams: teams,
@@ -108,7 +186,11 @@ class TeamGeneratorService {
     return false;
   }
 
-  List<List<Player>> _generateLeastUsedPairings(List<Player> players, Random random) {
+  List<List<Player>> _generateLeastUsedPairings(
+    List<Player> players,
+    Map<String, Map<String, int>> partnershipMatrix,
+    Random random,
+  ) {
     final remaining = List<Player>.from(players);
     final teams = <List<Player>>[];
 
@@ -116,12 +198,18 @@ class TeamGeneratorService {
       int minCount = 1000000;
       final candidates = <List<Player>>[];
 
-      // Find all pairings with minimum count
+      // Find all pairings with minimum count from global history
       for (int i = 0; i < remaining.length; i++) {
         for (int j = i + 1; j < remaining.length; j++) {
           final p1 = remaining[i];
           final p2 = remaining[j];
-          final count = (p1.pairedWithToday[p2.id] ?? 0) + (p2.pairedWithToday[p1.id] ?? 0);
+
+          // Use global historical count instead of daily count
+          final count = _fairnessService.getPartnershipCount(
+            p1.id,
+            p2.id,
+            partnershipMatrix,
+          );
 
           if (count < minCount) {
             minCount = count;
@@ -147,7 +235,10 @@ class TeamGeneratorService {
     return teams;
   }
 
-  List<Player> _updatePlayerPairings(List<List<Player>> teams, List<Player> allPlayers) {
+  List<Player> _updatePlayerPairings(
+    List<List<Player>> teams,
+    List<Player> allPlayers,
+  ) {
     final pairingsMap = <String, Map<String, int>>{};
 
     for (final team in teams) {

@@ -1,19 +1,4 @@
-# Contracts Summary
-
-Generated: 2026-02-17
-
-## System Identity
-_(empty — populated after first maintenance)_
-
-## Active Contracts
-_(empty — populated after first maintenance)_
-
-## Non-Goals
-_(empty — populated after first maintenance)_
-
-## Unprocessed
-
-## 2026-02-17 | Implement Fair Balance Team Generation
+# Contract Changes — Implement Fair Balance Team Generation
 
 **Action:** create
 
@@ -24,5 +9,3 @@ No two players may partner together more than once in the same day, unless all p
 
 **Contract 2 — Long-Term Partnership Fairness:**
 Over time, all player partnerships should converge to roughly equal play counts, subject to daily non-repetition constraints.
-
----
