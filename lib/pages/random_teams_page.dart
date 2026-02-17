@@ -38,11 +38,13 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
 
     if (shouldReset) {
       final players = ref.read(playersProvider).value ?? [];
-      final resetPlayers = players.map((p) => p.copyWith(pairedWithToday: {})).toList();
+      final resetPlayers =
+          players.map((p) => p.copyWith(pairedWithToday: {})).toList();
       await ref.read(playersProvider.notifier).updatePlayers(resetPlayers);
 
       final today = DateTime.now();
-      final todayString = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      final todayString =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
       await storage.saveLastPairingResetDate(todayString);
     }
   }
@@ -159,7 +161,9 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       await ref.read(restedPlayersProvider.notifier).updateRested(newRestedIds);
 
       if (result.updatedPlayers.isNotEmpty) {
-        await ref.read(playersProvider.notifier).updatePlayers(result.updatedPlayers);
+        await ref
+            .read(playersProvider.notifier)
+            .updatePlayers(result.updatedPlayers);
       }
     }
 
@@ -244,29 +248,33 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
   Future<void> _resetAllPairings() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('إعادة تعيين الفرق'),
-        content: const Text('هل تريد مسح سجل الفرق لهذا اليوم؟\nسيتمكن جميع اللاعبين من اللعب معاً مرة أخرى.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('إعادة تعيين الفرق'),
+            content: const Text(
+              'هل تريد مسح سجل الفرق لهذا اليوم؟\nسيتمكن جميع اللاعبين من اللعب معاً مرة أخرى.',
             ),
-            child: const Text('إعادة تعيين'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('إلغاء'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('إعادة تعيين'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
 
     if (confirmed == true) {
       final players = ref.read(playersProvider).value ?? [];
-      final resetPlayers = players.map((p) => p.copyWith(pairedWithToday: {})).toList();
+      final resetPlayers =
+          players.map((p) => p.copyWith(pairedWithToday: {})).toList();
       await ref.read(playersProvider.notifier).updatePlayers(resetPlayers);
 
       if (mounted) {
@@ -345,6 +353,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
               ],
             ),
           ),
+          Expanded(child: _buildResultsView()),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: SizedBox(
@@ -376,8 +385,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Expanded(child: _buildResultsView()),
+          const SizedBox(height: 12),
         ],
       ),
     );
@@ -465,12 +473,6 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
         }
 
         if (_result!.teams.length > 2) {
-          matches.add(
-            Text(
-              'المباراة ${_getArabicNumber(matchNumber)}',
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          );
           matches.add(const SizedBox(height: 12));
         }
 
