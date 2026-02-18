@@ -1,6 +1,7 @@
 ---
 description: Auto-execute task until the end
 ---
+
 ## Required Files
 
 - `/obelisk/workspace/active-task.md` **MUST exist**
@@ -33,8 +34,8 @@ Run all remaining phases in order until completion or STOP.
 
 | Phase            | Workflow                                    |
 | ---------------- | ------------------------------------------- |
-| Plan & Implement | `/obelisk/workspace/plan-implement-task.md` |
-| Review & Archive | `/obelisk/workspace/review-archive-task.md` |
+| Plan & Implement | `/obelisk/internal/plan-implement-task.md` |
+| Review & Archive | `/obelisk/internal/review-archive-task.md` |
 
 
 **Rules:**
