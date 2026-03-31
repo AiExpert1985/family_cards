@@ -18,9 +18,9 @@ class StatisticsService {
       players: players,
       games: filteredGames,
       sort: (a, b) {
-        final winsComparison = b.won.compareTo(a.won);
-        if (winsComparison != 0) return winsComparison;
-        return b.winRate.compareTo(a.winRate);
+        final diffCompare = b.diff.compareTo(a.diff);
+        if (diffCompare != 0) return diffCompare;
+        return b.played.compareTo(a.played);
       },
     );
   }
@@ -63,7 +63,15 @@ class StatisticsService {
 
       if (gamesUpToDate.isEmpty || cupDate == null) continue;
 
-      final stats = _calculateStats(players: players, games: gamesUpToDate);
+      final stats = _calculateStats(
+        players: players,
+        games: gamesUpToDate,
+        sort: (a, b) {
+          final rateCompare = b.winRate.compareTo(a.winRate);
+          if (rateCompare != 0) return rateCompare;
+          return b.played.compareTo(a.played);
+        },
+      );
       if (stats.isEmpty) continue;
 
       final maxWinRateRounded = stats.first.winRate.round();
@@ -157,8 +165,8 @@ class StatisticsService {
             .toList()
           ..sort(
             (a, b) {
-              final rateCompare = b.winRate.compareTo(a.winRate);
-              if (rateCompare != 0) return rateCompare;
+              final diffCompare = b.diff.compareTo(a.diff);
+              if (diffCompare != 0) return diffCompare;
               final playedCompare = b.played.compareTo(a.played);
               if (playedCompare != 0) return playedCompare;
               return a.opponentName.compareTo(b.opponentName);
@@ -223,8 +231,8 @@ class StatisticsService {
             .toList()
           ..sort(
             (a, b) {
-              final rateCompare = b.winRate.compareTo(a.winRate);
-              if (rateCompare != 0) return rateCompare;
+              final diffCompare = b.diff.compareTo(a.diff);
+              if (diffCompare != 0) return diffCompare;
               final playedCompare = b.played.compareTo(a.played);
               if (playedCompare != 0) return playedCompare;
               return a.teammateName.compareTo(b.teammateName);
@@ -292,8 +300,8 @@ class StatisticsService {
       ..sort(
         sort ??
             (a, b) {
-              final rateCompare = b.winRate.compareTo(a.winRate);
-              if (rateCompare != 0) return rateCompare;
+              final diffCompare = b.diff.compareTo(a.diff);
+              if (diffCompare != 0) return diffCompare;
               return b.played.compareTo(a.played);
             },
       );

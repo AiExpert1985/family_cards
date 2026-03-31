@@ -67,6 +67,7 @@ class StatisticsPage extends ConsumerWidget {
               ref: ref,
               statsAsync: overallStatsAsync,
               emptyMessage: 'لا توجد إحصائيات\nقم بإضافة مباريات أولاً',
+              isOverall: true,
             ),
             _buildStatsTab(
               context: context,
@@ -74,7 +75,6 @@ class StatisticsPage extends ConsumerWidget {
               statsAsync: dailyStatsAsync,
               emptyMessage: 'لا توجد مباريات في هذا اليوم',
               header: _buildDateSelector(context, ref, selectedDate),
-              rankByWins: true,
               filterBottomSheetBySelectedDate: true,
             ),
             _buildFirstPlaceTab(context, ref),
@@ -90,7 +90,7 @@ class StatisticsPage extends ConsumerWidget {
     required AsyncValue<List<PlayerStats>> statsAsync,
     required String emptyMessage,
     Widget? header,
-    bool rankByWins = false,
+    bool isOverall = false,
     bool filterBottomSheetBySelectedDate = false,
   }) {
     return Column(
@@ -108,7 +108,16 @@ class StatisticsPage extends ConsumerWidget {
                 );
               }
 
-              final ranks = _calculateRanks(stats, rankByWins: rankByWins);
+              if (isOverall) {
+                return _buildOverallList(
+                  context,
+                  ref,
+                  stats,
+                  filterBottomSheetBySelectedDate,
+                );
+              }
+
+              final ranks = _calculateRanks(stats);
 
               return ListView.builder(
                 itemCount: stats.length,
@@ -310,7 +319,11 @@ class StatisticsPage extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        'خسائر: ',
+                        stat.winRateText,
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                      Text(
+                        ' • خسائر: ',
                         style: TextStyle(color: Colors.grey[600], fontSize: 13),
                       ),
                       AnimatedCounter(
@@ -331,31 +344,27 @@ class StatisticsPage extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 16),
-            // Win rate badge
+            // Diff badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.getWinRateColor(stat.winRate),
-                    AppTheme.getWinRateColor(
-                      stat.winRate,
-                    ).withValues(alpha: 0.8),
+                    AppTheme.getDiffColor(stat.diff),
+                    AppTheme.getDiffColor(stat.diff).withValues(alpha: 0.8),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.getWinRateColor(
-                      stat.winRate,
-                    ).withValues(alpha: 0.3),
+                    color: AppTheme.getDiffColor(stat.diff).withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              child: AnimatedPercentage(
-                value: stat.winRate,
+              child: Text(
+                stat.diffText,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -439,28 +448,138 @@ class StatisticsPage extends ConsumerWidget {
         ?.toLocal();
   }
 
-  List<int> _calculateRanks(List<PlayerStats> stats, {bool rankByWins = false}) {
+  List<int> _calculateRanks(List<PlayerStats> stats) {
     final ranks = <int>[];
-    int? previousWins;
-    int? previousPercentage;
+    int? previousDiff;
     var uniqueRank = 0;
 
     for (var i = 0; i < stats.length; i++) {
-      final currentPercentage = stats[i].winRate.round();
-      final currentWins = stats[i].won;
-      final isSameRank = rankByWins
-          ? previousWins != null &&
-              currentWins == previousWins &&
-              currentPercentage == previousPercentage
-          : previousPercentage != null && currentPercentage == previousPercentage;
+      final currentDiff = stats[i].diff;
+      final isSameRank = previousDiff != null && currentDiff == previousDiff;
       final rank = isSameRank ? uniqueRank : ++uniqueRank;
-
       ranks.add(rank);
-      previousWins = currentWins;
-      previousPercentage = currentPercentage;
+      previousDiff = currentDiff;
     }
 
     return ranks;
+  }
+
+  Widget _buildOverallList(
+    BuildContext context,
+    WidgetRef ref,
+    List<PlayerStats> stats,
+    bool filterBottomSheetBySelectedDate,
+  ) {
+    final totalPlayed = stats.fold(0, (sum, s) => sum + s.played);
+    final playerCount = stats.length;
+    final threshold = playerCount > 0 ? (totalPlayed / playerCount / 2).floor() : 0;
+
+    final qualified = stats.where((s) => s.played >= threshold).toList();
+    final belowThreshold = stats.where((s) => s.played < threshold).toList()
+      ..sort((a, b) => b.played.compareTo(a.played));
+
+    final ranks = _calculateRanks(qualified);
+    final hasBelowSection = belowThreshold.isNotEmpty;
+    final totalItems = qualified.length + (hasBelowSection ? 1 + belowThreshold.length : 0);
+
+    return ListView.builder(
+      itemCount: totalItems,
+      padding: const EdgeInsets.all(8),
+      itemBuilder: (context, index) {
+        if (index < qualified.length) {
+          return _buildStatCard(
+            context,
+            ref,
+            qualified[index],
+            ranks[index],
+            filterBottomSheetBySelectedDate,
+          );
+        }
+        if (index == qualified.length) {
+          return _buildBelowThresholdHeader();
+        }
+        final btStat = belowThreshold[index - qualified.length - 1];
+        return _buildBelowThresholdCard(context, ref, btStat, threshold, filterBottomSheetBySelectedDate);
+      },
+    );
+  }
+
+  Widget _buildBelowThresholdHeader() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(8, 12, 8, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppTheme.warningOrange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.warningOrange.withValues(alpha: 0.4)),
+      ),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.info_outline, color: AppTheme.warningOrange, size: 18),
+          SizedBox(width: 8),
+          Text(
+            'لاعبون بمباريات غير كافية',
+            style: TextStyle(
+              color: AppTheme.warningOrange,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBelowThresholdCard(
+    BuildContext context,
+    WidgetRef ref,
+    PlayerStats stat,
+    int threshold,
+    bool filterBottomSheetBySelectedDate,
+  ) {
+    return Opacity(
+      opacity: 0.65,
+      child: AnimatedCard(
+        onTap: () => _showPlayerDetailsBottomSheet(
+          context,
+          ref,
+          stat.playerId,
+          filterBottomSheetBySelectedDate,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.grey[400],
+                radius: 20,
+                child: const Icon(Icons.hourglass_bottom, color: Colors.white, size: 18),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      stat.name,
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'لعب ${stat.played} فقط من أصل $threshold مباراة',
+                      textAlign: TextAlign.right,
+                      style: TextStyle(color: AppTheme.warningOrange, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showPlayerDetailsBottomSheet(
@@ -665,18 +784,18 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
                 stat.opponentName,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: Text('فوز: ${stat.won} • خسارة: ${stat.lost}'),
+              subtitle: Text('فوز: ${stat.won} • خسارة: ${stat.lost} • ${stat.winRateText}'),
               trailing: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: AppTheme.getWinRateColor(stat.winRate),
+                  color: AppTheme.getDiffColor(stat.diff),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  stat.winRateText,
+                  stat.diffText,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -726,18 +845,18 @@ class _PlayerDetailsBottomSheet extends ConsumerWidget {
                 stat.teammateName,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: Text('فوز: ${stat.won} • خسارة: ${stat.lost}'),
+              subtitle: Text('فوز: ${stat.won} • خسارة: ${stat.lost} • ${stat.winRateText}'),
               trailing: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: AppTheme.getWinRateColor(stat.winRate),
+                  color: AppTheme.getDiffColor(stat.diff),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  stat.winRateText,
+                  stat.diffText,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,

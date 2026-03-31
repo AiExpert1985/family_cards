@@ -100,6 +100,13 @@ class AppTheme {
     return errorRed;
   }
 
+  // Helper method to get diff (wins - losses) color
+  static Color getDiffColor(int diff) {
+    if (diff > 0) return successGreen;
+    if (diff == 0) return warningOrange;
+    return errorRed;
+  }
+
   // Helper method to get rank color
   static Color getRankColor(int rank) {
     switch (rank) {

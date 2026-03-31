@@ -15,6 +15,8 @@ class PlayerStats {
   double get winRate => played > 0 ? (won / played * 100) : 0;
   String get winRateText => '${winRate.toStringAsFixed(0)}%';
   int get lost => played - won;
+  int get diff => won - lost;
+  String get diffText => diff > 0 ? '+$diff' : '$diff';
 }
 
 class HeadToHeadStat {
@@ -33,6 +35,8 @@ class HeadToHeadStat {
   int get lost => played - won;
   double get winRate => played > 0 ? (won / played * 100) : 0;
   String get winRateText => '${winRate.toStringAsFixed(0)}%';
+  int get diff => won - lost;
+  String get diffText => diff > 0 ? '+$diff' : '$diff';
 }
 
 class FirstPlaceStats {
@@ -67,4 +71,6 @@ class TeammateStats {
   int get lost => played - won;
   double get winRate => played > 0 ? (won / played * 100) : 0;
   String get winRateText => '${winRate.toStringAsFixed(0)}%';
+  int get diff => won - lost;
+  String get diffText => diff > 0 ? '+$diff' : '$diff';
 }
