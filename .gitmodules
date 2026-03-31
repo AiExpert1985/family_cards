@@ -1,0 +1,3 @@
+[submodule ".claude"]
+	path = .claude
+	url = https://github.com/AiExpert1985/obelisk-core.git
