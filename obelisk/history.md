@@ -5,3 +5,9 @@
 **Rejected:** Excluding below-threshold players entirely from the overall list — rejected in favor of showing them in a visually distinct section so players understand why they are not ranked.
 
 ---
+
+## 20260401-0001 | Calendar Dot Markers for Days With Games | TASK
+
+**Task:** Replaced the built-in `showDatePicker` in the daily stats tab with a `table_calendar`-based bottom sheet that shows dot markers on days that have at least one game recorded. Dots are teal-colored, matching the app theme. The `intl` dependency was bumped to `^0.20.2` to satisfy `table_calendar 3.2.0`'s requirement.
+
+---

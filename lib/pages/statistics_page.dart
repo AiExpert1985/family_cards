@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:table_calendar/table_calendar.dart';
 
 import '../models/game.dart';
 import '../models/player.dart';
@@ -413,20 +414,38 @@ class StatisticsPage extends ConsumerWidget {
   ) async {
     final firstDate = _resolveEarliestGameDate(ref) ?? DateTime(2000);
     final lastDate = DateTime.now();
-    final pickedDate = await showDatePicker(
-      context: context,
-      initialDate: initialDate.isAfter(lastDate) ? lastDate : initialDate,
-      firstDate: firstDate.isAfter(lastDate) ? lastDate : firstDate,
-      lastDate: lastDate,
-    );
+    final daysWithGames = _resolveDaysWithGames(ref);
 
-    if (pickedDate != null) {
-      ref.read(selectedStatisticsDateProvider.notifier).state = DateTime(
-        pickedDate.year,
-        pickedDate.month,
-        pickedDate.day,
-      );
-    }
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _CalendarPickerSheet(
+        initialDate: initialDate.isAfter(lastDate) ? lastDate : initialDate,
+        firstDate: firstDate.isAfter(lastDate) ? lastDate : firstDate,
+        lastDate: lastDate,
+        daysWithGames: daysWithGames,
+        onDaySelected: (picked) {
+          ref.read(selectedStatisticsDateProvider.notifier).state = DateTime(
+            picked.year,
+            picked.month,
+            picked.day,
+          );
+        },
+      ),
+    );
+  }
+
+  Set<DateTime> _resolveDaysWithGames(WidgetRef ref) {
+    return ref.read(gamesProvider).maybeWhen(
+          data: (games) => games
+              .map((g) {
+                final d = g.date.toLocal();
+                return DateTime(d.year, d.month, d.day);
+              })
+              .toSet(),
+          orElse: () => {},
+        );
   }
 
   DateTime? _resolveEarliestGameDate(WidgetRef ref) {
@@ -631,6 +650,105 @@ class StatisticsPage extends ConsumerWidget {
                   ),
             ),
           ),
+    );
+  }
+}
+
+class _CalendarPickerSheet extends StatefulWidget {
+  final DateTime initialDate;
+  final DateTime firstDate;
+  final DateTime lastDate;
+  final Set<DateTime> daysWithGames;
+  final ValueChanged<DateTime> onDaySelected;
+
+  const _CalendarPickerSheet({
+    required this.initialDate,
+    required this.firstDate,
+    required this.lastDate,
+    required this.daysWithGames,
+    required this.onDaySelected,
+  });
+
+  @override
+  State<_CalendarPickerSheet> createState() => _CalendarPickerSheetState();
+}
+
+class _CalendarPickerSheetState extends State<_CalendarPickerSheet> {
+  late DateTime _focusedDay;
+  late DateTime _selectedDay;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusedDay = widget.initialDate;
+    _selectedDay = widget.initialDate;
+  }
+
+  bool _hasGames(DateTime day) {
+    final normalized = DateTime(day.year, day.month, day.day);
+    return widget.daysWithGames.contains(normalized);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TableCalendar(
+            firstDay: widget.firstDate,
+            lastDay: widget.lastDate,
+            focusedDay: _focusedDay,
+            selectedDayPredicate: (day) => DateUtils.isSameDay(day, _selectedDay),
+            calendarFormat: CalendarFormat.month,
+            availableCalendarFormats: const {CalendarFormat.month: ''},
+            eventLoader: (day) => _hasGames(day) ? [true] : [],
+            onDaySelected: (selectedDay, focusedDay) {
+              setState(() {
+                _selectedDay = selectedDay;
+                _focusedDay = focusedDay;
+              });
+              widget.onDaySelected(selectedDay);
+              Navigator.of(context).pop();
+            },
+            onPageChanged: (focusedDay) {
+              _focusedDay = focusedDay;
+            },
+            calendarStyle: CalendarStyle(
+              markerDecoration: BoxDecoration(
+                color: AppTheme.accentTeal,
+                shape: BoxShape.circle,
+              ),
+              selectedDecoration: BoxDecoration(
+                color: AppTheme.primaryPurple,
+                shape: BoxShape.circle,
+              ),
+              todayDecoration: BoxDecoration(
+                color: AppTheme.primaryPurple.withValues(alpha: 0.4),
+                shape: BoxShape.circle,
+              ),
+            ),
+            headerStyle: const HeaderStyle(
+              formatButtonVisible: false,
+              titleCentered: true,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
