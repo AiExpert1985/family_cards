@@ -97,28 +97,14 @@ class SyncService {
   }
 
   List<Player> _mergePlayers(List<Player> current, List<Player> imported) {
-    final merged = List<Player>.from(current);
-    final existingIds = current.map((p) => p.id).toSet();
-
-    for (var player in imported) {
-      if (!existingIds.contains(player.id)) {
-        merged.add(player);
-      }
-    }
-
-    return merged;
+    final importedIds = imported.map((p) => p.id).toSet();
+    final localOnly = current.where((p) => !importedIds.contains(p.id));
+    return [...imported, ...localOnly];
   }
 
   List<Game> _mergeGames(List<Game> current, List<Game> imported) {
-    final merged = List<Game>.from(current);
-    final existingIds = current.map((g) => g.id).toSet();
-
-    for (var game in imported) {
-      if (!existingIds.contains(game.id)) {
-        merged.add(game);
-      }
-    }
-
-    return merged;
+    final importedIds = imported.map((g) => g.id).toSet();
+    final localOnly = current.where((g) => !importedIds.contains(g.id));
+    return [...imported, ...localOnly];
   }
 }
