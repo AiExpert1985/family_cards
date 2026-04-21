@@ -677,8 +677,13 @@ class _PlayerDetailsSheet extends ConsumerWidget {
         itemBuilder: (context, index) {
           final game = playerGames[index];
           final formatted = intl.DateFormat('yyyy/MM/dd').format(game.date);
+          final isInTeam1 = game.team1Player1 == playerId || game.team1Player2 == playerId;
+          final team1Won = game.winningTeam == 1;
+          final team2Won = game.winningTeam == 2;
+          final playerWon = isInTeam1 ? team1Won : team2Won;
           return Card(
             elevation: 2,
+            color: playerWon ? Colors.green.shade50 : Colors.red.shade50,
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
@@ -691,7 +696,8 @@ class _PlayerDetailsSheet extends ConsumerWidget {
                     children: [
                       _teamBox(
                         [playerMap[game.team1Player1] ?? '', playerMap[game.team1Player2] ?? ''],
-                        game.winningTeam == 1,
+                        isWinner: team1Won,
+                        isPlayerTeam: isInTeam1,
                       ),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 8),
@@ -699,7 +705,8 @@ class _PlayerDetailsSheet extends ConsumerWidget {
                       ),
                       _teamBox(
                         [playerMap[game.team2Player1] ?? '', playerMap[game.team2Player2] ?? ''],
-                        game.winningTeam == 2,
+                        isWinner: team2Won,
+                        isPlayerTeam: !isInTeam1,
                       ),
                     ],
                   ),
@@ -712,7 +719,7 @@ class _PlayerDetailsSheet extends ConsumerWidget {
     );
   }
 
-  Widget _teamBox(List<String> names, bool isWinner) {
+  Widget _teamBox(List<String> names, {required bool isWinner, required bool isPlayerTeam}) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(8),
