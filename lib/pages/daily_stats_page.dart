@@ -35,8 +35,11 @@ class _DailyStatsPageState extends ConsumerState<DailyStatsPage> {
     if (games == null || games.isEmpty) return;
     final latest = games.reduce((a, b) => a.date.isAfter(b.date) ? a : b);
     final d = latest.date.toLocal();
-    ref.read(selectedDailyDateProvider.notifier).state =
-        DateTime(d.year, d.month, d.day);
+    ref.read(selectedDailyDateProvider.notifier).state = DateTime(
+      d.year,
+      d.month,
+      d.day,
+    );
   }
 
   @override
@@ -50,10 +53,14 @@ class _DailyStatsPageState extends ConsumerState<DailyStatsPage> {
         appBar: AppBar(
           title: Column(
             children: [
-              const Text('الإحصائيات اليومية',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              Text(formattedDate,
-                  style: const TextStyle(fontSize: 13, color: Colors.white70)),
+              const Text(
+                'الإحصائيات اليومية',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              Text(
+                formattedDate,
+                style: const TextStyle(fontSize: 13, color: Colors.white70),
+              ),
             ],
           ),
           flexibleSpace: Container(
@@ -70,9 +77,16 @@ class _DailyStatsPageState extends ConsumerState<DailyStatsPage> {
           bottom: TabBar(
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
-            labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            labelStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
             unselectedLabelStyle: const TextStyle(fontSize: 15),
-            indicator: ModernTabIndicator(color: AppTheme.accentTeal, height: 3, radius: 2),
+            indicator: ModernTabIndicator(
+              color: AppTheme.accentTeal,
+              height: 3,
+              radius: 2,
+            ),
             tabs: const [
               Tab(text: 'الترتيب'),
               Tab(text: 'الأبطال'),
@@ -91,12 +105,17 @@ class _DailyStatsPageState extends ConsumerState<DailyStatsPage> {
     );
   }
 
-  Future<void> _selectDate(BuildContext context, WidgetRef ref, DateTime current) async {
+  Future<void> _selectDate(
+    BuildContext context,
+    WidgetRef ref,
+    DateTime current,
+  ) async {
     final games = ref.read(gamesProvider).value ?? [];
-    final daysWithGames = games.map((g) {
-      final d = g.date.toLocal();
-      return DateTime(d.year, d.month, d.day);
-    }).toSet();
+    final daysWithGames =
+        games.map((g) {
+          final d = g.date.toLocal();
+          return DateTime(d.year, d.month, d.day);
+        }).toSet();
 
     DateTime firstDate = DateTime.now();
     if (games.isNotEmpty) {
@@ -110,16 +129,20 @@ class _DailyStatsPageState extends ConsumerState<DailyStatsPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _CalendarSheet(
-        initialDate: current,
-        firstDate: firstDate,
-        lastDate: DateTime.now(),
-        daysWithGames: daysWithGames,
-        onDaySelected: (picked) {
-          ref.read(selectedDailyDateProvider.notifier).state =
-              DateTime(picked.year, picked.month, picked.day);
-        },
-      ),
+      builder:
+          (ctx) => _CalendarSheet(
+            initialDate: current,
+            firstDate: firstDate,
+            lastDate: DateTime.now(),
+            daysWithGames: daysWithGames,
+            onDaySelected: (picked) {
+              ref.read(selectedDailyDateProvider.notifier).state = DateTime(
+                picked.year,
+                picked.month,
+                picked.day,
+              );
+            },
+          ),
     );
   }
 }
@@ -138,43 +161,51 @@ class _DailyRankingTab extends ConsumerWidget {
     final service = ref.watch(statisticsServiceProvider);
 
     return playersAsync.when(
-      data: (players) => gamesAsync.when(
-        data: (games) {
-          final stats = service
-              .calculateDailyStats(date: selectedDate, players: players, games: games)
-              .where((s) => s.played > 0)
-              .toList();
+      data:
+          (players) => gamesAsync.when(
+            data: (games) {
+              final stats =
+                  service
+                      .calculateDailyStats(
+                        date: selectedDate,
+                        players: players,
+                        games: games,
+                      )
+                      .where((s) => s.played > 0)
+                      .toList();
 
-          if (stats.isEmpty) {
-            return const Center(
-              child: EmptyState(
-                icon: Icons.bar_chart,
-                message: 'لا توجد مباريات في هذا اليوم',
-              ),
-            );
-          }
+              if (stats.isEmpty) {
+                return const Center(
+                  child: EmptyState(
+                    icon: Icons.bar_chart,
+                    message: 'لا توجد مباريات في هذا اليوم',
+                  ),
+                );
+              }
 
-          final ranks = _calculateRanks(stats);
-          return ListView.builder(
-            itemCount: stats.length,
-            padding: const EdgeInsets.all(8),
-            itemBuilder: (context, index) => _StatCard(
-              stat: stats[index],
-              rank: ranks[index],
-              onTap: () => _showPlayerDailyGames(
-                context,
-                stats[index].playerId,
-                stats[index].name,
-                selectedDate,
-                games,
-                {for (var p in players) p.id: p.name},
-              ),
-            ),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('حدث خطأ: $e')),
-      ),
+              final ranks = _calculateRanks(stats);
+              return ListView.builder(
+                itemCount: stats.length,
+                padding: const EdgeInsets.all(8),
+                itemBuilder:
+                    (context, index) => _StatCard(
+                      stat: stats[index],
+                      rank: ranks[index],
+                      onTap:
+                          () => _showPlayerDailyGames(
+                            context,
+                            stats[index].playerId,
+                            stats[index].name,
+                            selectedDate,
+                            games,
+                            {for (var p in players) p.id: p.name},
+                          ),
+                    ),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('حدث خطأ: $e')),
+          ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('حدث خطأ: $e')),
     );
@@ -188,83 +219,100 @@ class _DailyRankingTab extends ConsumerWidget {
     List<Game> games,
     Map<String, String> playerMap,
   ) {
-    final dayGames = games.where((g) {
-      final gd = g.date.toLocal();
-      final fd = date.toLocal();
-      return gd.year == fd.year &&
-          gd.month == fd.month &&
-          gd.day == fd.day &&
-          (g.team1Player1 == playerId ||
-              g.team1Player2 == playerId ||
-              g.team2Player1 == playerId ||
-              g.team2Player2 == playerId);
-    }).toList();
+    final dayGames =
+        games.where((g) {
+          final gd = g.date.toLocal();
+          final fd = date.toLocal();
+          return gd.year == fd.year &&
+              gd.month == fd.month &&
+              gd.day == fd.day &&
+              (g.team1Player1 == playerId ||
+                  g.team1Player2 == playerId ||
+                  g.team2Player1 == playerId ||
+                  g.team2Player2 == playerId);
+        }).toList();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.4,
-        maxChildSize: 0.95,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 20,
-                offset: const Offset(0, -5),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'مباريات $playerName',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Divider(),
-              Expanded(
-                child: dayGames.isEmpty
-                    ? const Center(child: Text('لا توجد مباريات', style: TextStyle(color: Colors.grey)))
-                    : ListView.separated(
-                        controller: scrollController,
-                        padding: const EdgeInsets.all(16),
-                        itemCount: dayGames.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final game = dayGames[index];
-                          final isInTeam1 = game.team1Player1 == playerId || game.team1Player2 == playerId;
-                          return _PlayerGameCard(
-                            game: game,
-                            isInTeam1: isInTeam1,
-                            playerMap: playerMap,
-                          );
-                        },
+      builder:
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.85,
+            minChildSize: 0.4,
+            maxChildSize: 0.95,
+            builder:
+                (context, scrollController) => Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 20,
+                        offset: const Offset(0, -5),
                       ),
-              ),
-            ],
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'مباريات $playerName',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Divider(),
+                      Expanded(
+                        child:
+                            dayGames.isEmpty
+                                ? const Center(
+                                  child: Text(
+                                    'لا توجد مباريات',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                )
+                                : ListView.separated(
+                                  controller: scrollController,
+                                  padding: const EdgeInsets.all(16),
+                                  itemCount: dayGames.length,
+                                  separatorBuilder:
+                                      (_, __) => const SizedBox(height: 8),
+                                  itemBuilder: (context, index) {
+                                    final game = dayGames[index];
+                                    final isInTeam1 =
+                                        game.team1Player1 == playerId ||
+                                        game.team1Player2 == playerId;
+                                    return _PlayerGameCard(
+                                      game: game,
+                                      isInTeam1: isInTeam1,
+                                      playerMap: playerMap,
+                                    );
+                                  },
+                                ),
+                      ),
+                    ],
+                  ),
+                ),
           ),
-        ),
-      ),
     );
   }
 
@@ -293,25 +341,42 @@ class _DailyCupsTab extends ConsumerWidget {
       data: (players) {
         if (players.isEmpty) {
           return const Center(
-            child: EmptyState(icon: Icons.emoji_events, message: 'لا يوجد لاعبون.'),
+            child: EmptyState(
+              icon: Icons.emoji_events,
+              message: 'لا يوجد لاعبون.',
+            ),
           );
         }
         return gamesAsync.when(
           data: (games) {
             final service = ref.watch(statisticsServiceProvider);
-            final cups = service.calculateDailyCups(players: players, games: games);
+            final cups = service.calculateDailyCups(
+              players: players,
+              games: games,
+            );
             if (cups.isEmpty) {
               return const Center(
-                child: EmptyState(icon: Icons.emoji_events, message: 'لا توجد إحصائيات.'),
+                child: EmptyState(
+                  icon: Icons.emoji_events,
+                  message: 'لا توجد إحصائيات.',
+                ),
               );
             }
             return ListView.builder(
               itemCount: cups.length,
               padding: const EdgeInsets.all(8),
-              itemBuilder: (context, index) => _DailyCupCard(
-                stat: cups[index],
-                onCupTap: (date) => _showDailySnapshot(context, ref, players, games, date),
-              ),
+              itemBuilder:
+                  (context, index) => _DailyCupCard(
+                    stat: cups[index],
+                    onCupTap:
+                        (date) => _showDailySnapshot(
+                          context,
+                          ref,
+                          players,
+                          games,
+                          date,
+                        ),
+                  ),
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -331,10 +396,11 @@ class _DailyCupsTab extends ConsumerWidget {
     DateTime date,
   ) {
     final service = ref.read(statisticsServiceProvider);
-    final stats = service
-        .calculateDailyStats(date: date, players: players, games: games)
-        .where((s) => s.played > 0)
-        .toList();
+    final stats =
+        service
+            .calculateDailyStats(date: date, players: players, games: games)
+            .where((s) => s.played > 0)
+            .toList();
     final label = intl.DateFormat('yyyy/MM/dd').format(date);
     _showStandingSheet(context, 'ترتيب يوم $label', stats);
   }
@@ -355,62 +421,74 @@ class _DailyGamesTab extends ConsumerWidget {
 
 // ── Standing snapshot sheet ───────────────────────────────────────────────────
 
-void _showStandingSheet(BuildContext context, String title, List<PlayerStats> stats) {
+void _showStandingSheet(
+  BuildContext context,
+  String title,
+  List<PlayerStats> stats,
+) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) => DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.4,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) => Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
+    builder:
+        (context) => DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.4,
+          maxChildSize: 0.95,
+          builder:
+              (context, scrollController) => Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 20,
+                      offset: const Offset(0, -5),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Divider(),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: scrollController,
+                        padding: const EdgeInsets.all(8),
+                        itemCount: stats.length,
+                        itemBuilder:
+                            (context, index) =>
+                                _StatCard(stat: stats[index], rank: index + 1),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
         ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                title,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Divider(),
-            Expanded(
-              child: ListView.builder(
-                controller: scrollController,
-                padding: const EdgeInsets.all(8),
-                itemCount: stats.length,
-                itemBuilder: (context, index) =>
-                    _StatCard(stat: stats[index], rank: index + 1),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
   );
 }
 
@@ -436,7 +514,11 @@ class _StatCard extends StatelessWidget {
               radius: 20,
               child: Text(
                 '$rank',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
             const SizedBox(width: 16),
@@ -447,24 +529,35 @@ class _StatCard extends StatelessWidget {
                   Text(
                     stat.name,
                     textAlign: TextAlign.right,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Text(stat.winRateText,
-                          style: TextStyle(color: Colors.grey[500], fontSize: 12)),
-                      Text(' • خسائر: ',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                      Text(
+                        stat.winRateText,
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                      Text(
+                        ' • خسائر: ',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      ),
                       AnimatedCounter(
-                          value: stat.lost,
-                          style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-                      Text(' • انتصارات: ',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                        value: stat.lost,
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      ),
+                      Text(
+                        ' • انتصارات: ',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      ),
                       AnimatedCounter(
-                          value: stat.won,
-                          style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                        value: stat.won,
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      ),
                     ],
                   ),
                 ],
@@ -483,7 +576,9 @@ class _StatCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.getDiffColor(stat.diff).withValues(alpha: 0.3),
+                    color: AppTheme.getDiffColor(
+                      stat.diff,
+                    ).withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -491,7 +586,11 @@ class _StatCard extends StatelessWidget {
               ),
               child: Text(
                 stat.diffText,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
           ],
@@ -518,8 +617,10 @@ class _PlayerGameCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final team1Won = game.winningTeam == 1;
     final team2Won = game.winningTeam == 2;
+    final playerWon = isInTeam1 ? team1Won : team2Won;
     return Card(
       elevation: 2,
+      color: playerWon ? Colors.green.shade50 : Colors.red.shade50,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
@@ -544,12 +645,19 @@ class _PlayerGameCard extends StatelessWidget {
     );
   }
 
-  Widget _teamBox(List<String> names, {required bool isWinner, required bool isPlayerTeam}) {
+  Widget _teamBox(
+    List<String> names, {
+    required bool isWinner,
+    required bool isPlayerTeam,
+  }) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isWinner ? Colors.green.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
+          color:
+              isWinner
+                  ? Colors.green.withValues(alpha: 0.1)
+                  : Colors.grey.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isWinner ? Colors.green : Colors.transparent,
@@ -557,9 +665,10 @@ class _PlayerGameCard extends StatelessWidget {
           ),
         ),
         child: Column(
-          children: names
-              .map((n) => Text(n, style: const TextStyle(fontSize: 12)))
-              .toList(),
+          children:
+              names
+                  .map((n) => Text(n, style: const TextStyle(fontSize: 12)))
+                  .toList(),
         ),
       ),
     );
@@ -588,7 +697,10 @@ class _DailyCupCard extends StatelessWidget {
                 child: Text(
                   stat.name,
                   textAlign: TextAlign.right,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
               Expanded(
@@ -611,14 +723,21 @@ class _DailyCupCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.amber,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '${stat.firstPlaceCount}',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
             ],
@@ -662,7 +781,9 @@ class _CalendarSheetState extends State<_CalendarSheet> {
   }
 
   bool _hasGames(DateTime day) {
-    return widget.daysWithGames.contains(DateTime(day.year, day.month, day.day));
+    return widget.daysWithGames.contains(
+      DateTime(day.year, day.month, day.day),
+    );
   }
 
   @override
@@ -689,7 +810,8 @@ class _CalendarSheetState extends State<_CalendarSheet> {
             firstDay: widget.firstDate,
             lastDay: widget.lastDate,
             focusedDay: _focusedDay,
-            selectedDayPredicate: (day) => DateUtils.isSameDay(day, _selectedDay),
+            selectedDayPredicate:
+                (day) => DateUtils.isSameDay(day, _selectedDay),
             calendarFormat: CalendarFormat.month,
             availableCalendarFormats: const {CalendarFormat.month: ''},
             eventLoader: (day) => _hasGames(day) ? [true] : [],
