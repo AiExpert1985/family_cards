@@ -161,6 +161,14 @@ class _DailyRankingTab extends ConsumerWidget {
             itemBuilder: (context, index) => _StatCard(
               stat: stats[index],
               rank: ranks[index],
+              onTap: () => _showPlayerDailyGames(
+                context,
+                stats[index].playerId,
+                stats[index].name,
+                selectedDate,
+                games,
+                {for (var p in players) p.id: p.name},
+              ),
             ),
           );
         },
@@ -169,6 +177,94 @@ class _DailyRankingTab extends ConsumerWidget {
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('حدث خطأ: $e')),
+    );
+  }
+
+  void _showPlayerDailyGames(
+    BuildContext context,
+    String playerId,
+    String playerName,
+    DateTime date,
+    List<Game> games,
+    Map<String, String> playerMap,
+  ) {
+    final dayGames = games.where((g) {
+      final gd = g.date.toLocal();
+      final fd = date.toLocal();
+      return gd.year == fd.year &&
+          gd.month == fd.month &&
+          gd.day == fd.day &&
+          (g.team1Player1 == playerId ||
+              g.team1Player2 == playerId ||
+              g.team2Player1 == playerId ||
+              g.team2Player2 == playerId);
+    }).toList();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.4,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 20,
+                offset: const Offset(0, -5),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'مباريات $playerName',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Divider(),
+              Expanded(
+                child: dayGames.isEmpty
+                    ? const Center(child: Text('لا توجد مباريات', style: TextStyle(color: Colors.grey)))
+                    : ListView.separated(
+                        controller: scrollController,
+                        padding: const EdgeInsets.all(16),
+                        itemCount: dayGames.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final game = dayGames[index];
+                          final isInTeam1 = game.team1Player1 == playerId || game.team1Player2 == playerId;
+                          return _PlayerGameCard(
+                            game: game,
+                            isInTeam1: isInTeam1,
+                            playerMap: playerMap,
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -265,7 +361,7 @@ void _showStandingSheet(BuildContext context, String title, List<PlayerStats> st
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (context) => DraggableScrollableSheet(
-      initialChildSize: 0.7,
+      initialChildSize: 0.85,
       minChildSize: 0.4,
       maxChildSize: 0.95,
       builder: (context, scrollController) => Container(
@@ -323,13 +419,14 @@ void _showStandingSheet(BuildContext context, String title, List<PlayerStats> st
 class _StatCard extends StatelessWidget {
   final PlayerStats stat;
   final int rank;
+  final VoidCallback? onTap;
 
-  const _StatCard({required this.stat, required this.rank});
+  const _StatCard({required this.stat, required this.rank, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return AnimatedCard(
-      onTap: () {},
+      onTap: onTap ?? () {},
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
@@ -398,6 +495,71 @@ class _StatCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PlayerGameCard extends StatelessWidget {
+  final Game game;
+  final bool isInTeam1;
+  final Map<String, String> playerMap;
+
+  const _PlayerGameCard({
+    required this.game,
+    required this.isInTeam1,
+    required this.playerMap,
+  });
+
+  String _name(String id) => playerMap[id] ?? '';
+
+  @override
+  Widget build(BuildContext context) {
+    final team1Won = game.winningTeam == 1;
+    final team2Won = game.winningTeam == 2;
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            _teamBox(
+              [_name(game.team1Player1), _name(game.team1Player2)],
+              isWinner: team1Won,
+              isPlayerTeam: isInTeam1,
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Text('VS', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            _teamBox(
+              [_name(game.team2Player1), _name(game.team2Player2)],
+              isWinner: team2Won,
+              isPlayerTeam: !isInTeam1,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _teamBox(List<String> names, {required bool isWinner, required bool isPlayerTeam}) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isWinner ? Colors.green.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isWinner ? Colors.green : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Column(
+          children: names
+              .map((n) => Text(n, style: const TextStyle(fontSize: 12)))
+              .toList(),
         ),
       ),
     );

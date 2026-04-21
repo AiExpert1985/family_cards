@@ -220,7 +220,7 @@ void _showStandingSheet(BuildContext context, String title, List<PlayerStats> st
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (context) => DraggableScrollableSheet(
-      initialChildSize: 0.7,
+      initialChildSize: 0.85,
       minChildSize: 0.4,
       maxChildSize: 0.95,
       builder: (context, scrollController) => Container(
@@ -676,9 +676,6 @@ class _PlayerDetailsSheet extends ConsumerWidget {
         separatorBuilder: (_, __) => const SizedBox(height: 8),
         itemBuilder: (context, index) {
           final game = playerGames[index];
-          final isInTeam1 = game.team1Player1 == playerId || game.team1Player2 == playerId;
-          final didWin = (isInTeam1 && game.winningTeam == 1) ||
-              (!isInTeam1 && game.winningTeam == 2);
           final formatted = intl.DateFormat('yyyy/MM/dd').format(game.date);
           return Card(
             elevation: 2,
@@ -687,25 +684,14 @@ class _PlayerDetailsSheet extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        didWin ? Icons.check_circle : Icons.cancel,
-                        color: didWin ? Colors.green : Colors.red,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(formatted,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    ],
-                  ),
+                  Text(formatted,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       _teamBox(
                         [playerMap[game.team1Player1] ?? '', playerMap[game.team1Player2] ?? ''],
                         game.winningTeam == 1,
-                        isInTeam1,
                       ),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 8),
@@ -714,7 +700,6 @@ class _PlayerDetailsSheet extends ConsumerWidget {
                       _teamBox(
                         [playerMap[game.team2Player1] ?? '', playerMap[game.team2Player2] ?? ''],
                         game.winningTeam == 2,
-                        !isInTeam1,
                       ),
                     ],
                   ),
@@ -727,7 +712,7 @@ class _PlayerDetailsSheet extends ConsumerWidget {
     );
   }
 
-  Widget _teamBox(List<String> names, bool isWinner, bool isPlayerTeam) {
+  Widget _teamBox(List<String> names, bool isWinner) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(8),
@@ -735,7 +720,7 @@ class _PlayerDetailsSheet extends ConsumerWidget {
           color: isWinner ? Colors.green.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isPlayerTeam ? Colors.purple : Colors.transparent,
+            color: isWinner ? Colors.green : Colors.transparent,
             width: 2,
           ),
         ),
