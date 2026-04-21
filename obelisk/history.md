@@ -25,3 +25,11 @@
 **Rejected:** Different cup colors for tied daily cup winners — rejected in favor of uniform gold for simplicity.
 
 ---
+
+## 20260421-0001 | Main Screen Action Buttons + Modern Games UX | TASK
+
+**Task:** Added a second circular icon button beside the existing challenge button on the main screen — a green "add result" button that navigates directly to the add-game flow. The challenge button icon was changed to a crossed-swords symbol. The Games tab in Overall Stats was simplified to a pure history list: the add button, player filter dropdown, and section title were removed. Game card edit and delete actions were modernised — long press opens the edit flow, swipe left deletes immediately with a 4-second undo snackbar.
+
+**Rejected:** Using `font_awesome_flutter` for the swords icon — the crossed-swords icon is Pro-only in Font Awesome; Unicode ⚔️ was used instead with no new dependency.
+
+---

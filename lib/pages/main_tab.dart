@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'daily_stats_page.dart';
+import 'new_game_page.dart';
 import 'overall_stats_page.dart';
 import 'random_teams_page.dart';
 
@@ -59,8 +60,8 @@ class MainTab extends StatelessWidget {
 
                 const SizedBox(height: 40),
 
-                // Random teams icon button
-                _buildChallengeButton(context),
+                // Action buttons row: challenge + add result
+                _buildActionButtons(context),
 
                 const Spacer(),
               ],
@@ -120,36 +121,103 @@ class MainTab extends StatelessWidget {
     );
   }
 
-  Widget _buildChallengeButton(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 72,
-        height: 72,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
+  Widget _buildActionButtons(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildLabeledButton(
+          context: context,
+          label: 'قرعة',
           gradient: const LinearGradient(
             colors: [Color(0xFFFF7043), Color(0xFFFF5722)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFFF5722).withValues(alpha: 0.4),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const RandomTeamsPage()),
-            ),
-            child: const Icon(Icons.sports_kabaddi, size: 36, color: Colors.white),
+          shadowColor: Color(0xFFFF5722),
+          child: const Text('⚔️', style: TextStyle(fontSize: 28)),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const RandomTeamsPage()),
           ),
+        ),
+        const SizedBox(width: 32),
+        _buildLabeledButton(
+          context: context,
+          label: 'اضافة نتيجة',
+          gradient: const LinearGradient(
+            colors: [Color(0xFF43A047), Color(0xFF66BB6A)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          shadowColor: Color(0xFF43A047),
+          child: const Icon(Icons.note_add, size: 34, color: Colors.white),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const NewGamePage()),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLabeledButton({
+    required BuildContext context,
+    required String label,
+    required LinearGradient gradient,
+    required Color shadowColor,
+    required Widget child,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildCircleButton(
+          context: context,
+          gradient: gradient,
+          shadowColor: shadowColor,
+          child: child,
+          onTap: onTap,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF555555),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCircleButton({
+    required BuildContext context,
+    required LinearGradient gradient,
+    required Color shadowColor,
+    required Widget child,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: gradient,
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor.withValues(alpha: 0.4),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Center(child: child),
         ),
       ),
     );
