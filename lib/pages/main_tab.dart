@@ -1,8 +1,9 @@
 // ============== pages/main_tab.dart ==============
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'daily_stats_page.dart';
+import 'overall_stats_page.dart';
 import 'random_teams_page.dart';
-import 'statistics_page.dart';
 
 class MainTab extends StatelessWidget {
   const MainTab({super.key});
@@ -26,39 +27,40 @@ class MainTab extends StatelessWidget {
               children: [
                 const Spacer(),
 
-                // Random Teams Button
-                _buildMainButton(
-                  context: context,
-                  icon: Icons.shuffle,
-                  label: 'قرعة اللاعبين',
-                  gradient: const LinearGradient(
-                    colors: [AppTheme.accentTeal, Color(0xFF26C6DA)],
-                  ),
-                  onPressed:
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const RandomTeamsPage(),
-                        ),
-                      ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Statistics Button
-                _buildMainButton(
+                // Overall Stats button (teal)
+                _buildStatsButton(
                   context: context,
                   icon: Icons.bar_chart,
-                  label: 'الإحصائيات',
-                  gradient: AppTheme.primaryGradient,
-                  onPressed:
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const StatisticsPage(),
-                        ),
-                      ),
+                  label: 'الإحصائيات العامة',
+                  gradient: const LinearGradient(
+                    colors: [AppTheme.accentTeal, Color(0xFF26C6DA)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const OverallStatsPage()),
+                  ),
                 ),
+
+                const SizedBox(height: 20),
+
+                // Daily Stats button (purple)
+                _buildStatsButton(
+                  context: context,
+                  icon: Icons.today,
+                  label: 'الإحصائيات اليومية',
+                  gradient: AppTheme.primaryGradient,
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const DailyStatsPage()),
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                // Random teams icon button
+                _buildChallengeButton(context),
 
                 const Spacer(),
               ],
@@ -69,7 +71,7 @@ class MainTab extends StatelessWidget {
     );
   }
 
-  Widget _buildMainButton({
+  Widget _buildStatsButton({
     required BuildContext context,
     required IconData icon,
     required String label,
@@ -78,7 +80,7 @@ class MainTab extends StatelessWidget {
   }) {
     return Container(
       width: double.infinity,
-      height: 140,
+      height: 130,
       decoration: BoxDecoration(
         gradient: gradient,
         borderRadius: BorderRadius.circular(20),
@@ -100,18 +102,53 @@ class MainTab extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 48, color: Colors.white),
+                Icon(icon, size: 44, color: Colors.white),
                 const SizedBox(width: 16),
                 Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChallengeButton(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 72,
+        height: 72,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFF7043), Color(0xFFFF5722)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFF5722).withValues(alpha: 0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const RandomTeamsPage()),
+            ),
+            child: const Icon(Icons.sports_kabaddi, size: 36, color: Colors.white),
           ),
         ),
       ),

@@ -17,3 +17,11 @@
 **Task:** Replaced the built-in `showDatePicker` in the daily stats tab with a `table_calendar`-based bottom sheet that shows dot markers on days that have at least one game recorded. Dots are teal-colored, matching the app theme. The `intl` dependency was bumped to `^0.20.2` to satisfy `table_calendar 3.2.0`'s requirement.
 
 ---
+
+## 20260421-0000 | Dual Stats Pages + Redesigned Main Screen | TASK
+
+**Task:** Split the single Statistics screen into two dedicated pages — Overall Stats and Daily Stats — each with three tabs: Ranking, Cups, and Games. The Games tab in Overall Stats absorbed the standalone Games screen, which was removed from the home page app bar. Daily Cups awards gold cups based on single-day diff (wins−losses), with all tied winners receiving the same gold cup. Tapping any cup in either page shows a standings snapshot for the date that produced that cup: cumulative for overall cups, single-day for daily cups. The Daily Stats page auto-selects the last day with games and provides a calendar picker (with game-day dot markers) in the app bar. The main screen was redesigned with two rectangular stat buttons (teal for Overall, purple for Daily) and a small circular icon button for random team generation.
+
+**Rejected:** Different cup colors for tied daily cup winners — rejected in favor of uniform gold for simplicity.
+
+---

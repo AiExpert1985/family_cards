@@ -242,6 +242,85 @@ class StatisticsService {
     return stats;
   }
 
+  List<FirstPlaceStats> calculateDailyCups({
+    required List<Player> players,
+    required List<Game> games,
+  }) {
+    if (players.isEmpty || games.isEmpty) return [];
+
+    final cupCount = <String, int>{};
+    final cupDates = <String, List<DateTime>>{};
+
+    for (var player in players) {
+      cupCount[player.id] = 0;
+      cupDates[player.id] = [];
+    }
+
+    final sortedGames = List<Game>.from(games)..sort((a, b) => a.date.compareTo(b.date));
+
+    final uniqueDatesSet = <String>{};
+    for (var game in sortedGames) {
+      uniqueDatesSet.add(_getDateKey(game.date));
+    }
+    final uniqueDates = uniqueDatesSet.toList()..sort();
+
+    for (var dateKey in uniqueDates) {
+      final dayGames = sortedGames.where((g) => _getDateKey(g.date) == dateKey).toList();
+      if (dayGames.isEmpty) continue;
+
+      final cupDate = dayGames.first.date;
+
+      final dayStats = _calculateStats(
+        players: players,
+        games: dayGames,
+        sort: (a, b) {
+          final diffCompare = b.diff.compareTo(a.diff);
+          if (diffCompare != 0) return diffCompare;
+          return b.played.compareTo(a.played);
+        },
+      );
+
+      final activePlayers = dayStats.where((s) => s.played > 0).toList();
+      if (activePlayers.isEmpty) continue;
+
+      final maxDiff = activePlayers.first.diff;
+      for (var stat in activePlayers) {
+        if (stat.diff == maxDiff) {
+          cupCount[stat.playerId] = (cupCount[stat.playerId] ?? 0) + 1;
+          cupDates[stat.playerId]!.add(cupDate);
+        } else {
+          break;
+        }
+      }
+    }
+
+    return players
+        .map((p) => FirstPlaceStats(
+              playerId: p.id,
+              name: p.name,
+              firstPlaceCount: cupCount[p.id] ?? 0,
+              cupDates: cupDates[p.id] ?? [],
+              sharedCupDates: {},
+            ))
+        .where((s) => s.firstPlaceCount > 0)
+        .toList()
+      ..sort((a, b) => b.firstPlaceCount.compareTo(a.firstPlaceCount));
+  }
+
+  List<PlayerStats> calculateStatsUpToDate({
+    required List<Player> players,
+    required List<Game> games,
+    required DateTime date,
+  }) {
+    final d = date.toLocal();
+    final cutoff = DateTime(d.year, d.month, d.day);
+    final filtered = games.where((g) {
+      final gd = g.date.toLocal();
+      return !DateTime(gd.year, gd.month, gd.day).isAfter(cutoff);
+    }).toList();
+    return _calculateStats(players: players, games: filtered);
+  }
+
   List<Game> getPlayerGames({
     required String playerId,
     required List<Game> games,

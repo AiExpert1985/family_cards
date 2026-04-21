@@ -1,9 +1,7 @@
 // ============== pages/home_page.dart ==============
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/providers.dart';
 import '../theme/app_theme.dart';
-import 'games_history_page.dart';
 import 'main_tab.dart';
 import 'settings_page.dart';
 
@@ -19,53 +17,25 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   final _tabs = [const MainTab(), const SettingsPage()];
 
+  String get _title {
+    switch (_currentIndex) {
+      case 1:
+        return 'الإعدادات';
+      default:
+        return 'لعبة الورق';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final gamesAsync = ref.watch(gamesProvider);
-    final gameCount = gamesAsync.maybeWhen(
-      data: (games) => games.length,
-      orElse: () => 0,
-    );
-
-    String getTitle() {
-      switch (_currentIndex) {
-        case 0:
-          return 'لعبة الورق';
-        case 1:
-          return 'الإعدادات';
-        default:
-          return 'لعبة الورق';
-      }
-    }
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          getTitle(),
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Text(_title, style: const TextStyle(fontWeight: FontWeight.bold)),
         flexibleSpace: Container(
           decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
         ),
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16), // move left
-            child: IconButton(
-              icon: Badge(
-                label: Text('$gameCount'),
-                backgroundColor: AppTheme.warningOrange,
-                child: const Icon(Icons.history),
-              ),
-              onPressed:
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const GamesHistoryPage()),
-                  ),
-            ),
-          ),
-        ],
       ),
       body: _tabs[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
@@ -75,10 +45,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'الرئيسية'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'الإعدادات',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'الإعدادات'),
         ],
       ),
     );
