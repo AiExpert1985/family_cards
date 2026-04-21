@@ -2,12 +2,13 @@
 import 'package:family_cards/pages/new_game_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../models/player.dart';
 import '../models/team_generation_result.dart';
 import '../providers/providers.dart';
-import '../widgets/teams/team_display_card.dart';
-import '../widgets/teams/resting_players_card.dart';
 import '../widgets/teams/manual_rest_manager_sheet.dart';
+import '../widgets/teams/resting_players_card.dart';
+import '../widgets/teams/team_display_card.dart';
 
 class RandomTeamsPage extends ConsumerStatefulWidget {
   const RandomTeamsPage({super.key});
@@ -359,23 +360,17 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                icon:
-                    _isGenerating
-                        ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                        : const Icon(Icons.shuffle),
-                label: Text("القرعة", style: const TextStyle(fontSize: 16)),
+                label: Text(
+                  "قرعة جديدة",
+                  style: const TextStyle(fontSize: 16, color: Colors.black),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
-                      canGenerate ? Colors.grey.shade800 : Colors.grey.shade400,
+                      canGenerate
+                          ? Colors.orange.shade400
+                          : Colors.grey.shade400,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 25),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -385,7 +380,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 30),
         ],
       ),
     );
