@@ -48,7 +48,7 @@ class MainTab extends StatelessWidget {
                       ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 28),
 
                 // Daily Stats button (purple)
                 _buildStatsButton(
@@ -65,7 +65,7 @@ class MainTab extends StatelessWidget {
                       ),
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 56),
 
                 // Action buttons row: challenge + add result
                 _buildActionButtons(context),
@@ -148,7 +148,7 @@ class MainTab extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const RandomTeamsPage()),
               ),
         ),
-        const SizedBox(width: 20),
+        const SizedBox(width: 28),
         _buildLabeledButton(
           context: context,
           label: 'اضافة نتيجة',
@@ -165,7 +165,7 @@ class MainTab extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const NewGamePage()),
               ),
         ),
-        const SizedBox(width: 20),
+        const SizedBox(width: 28),
         _buildLabeledButton(
           context: context,
           label: 'مزامنة بيانات',
