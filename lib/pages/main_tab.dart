@@ -39,10 +39,13 @@ class MainTab extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const OverallStatsPage()),
-                  ),
+                  onPressed:
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const OverallStatsPage(),
+                        ),
+                      ),
                 ),
 
                 const SizedBox(height: 20),
@@ -53,10 +56,13 @@ class MainTab extends StatelessWidget {
                   icon: Icons.today,
                   label: 'الإحصائيات اليومية',
                   gradient: AppTheme.primaryGradient,
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const DailyStatsPage()),
-                  ),
+                  onPressed:
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const DailyStatsPage(),
+                        ),
+                      ),
                 ),
 
                 const SizedBox(height: 40),
@@ -128,7 +134,7 @@ class MainTab extends StatelessWidget {
       children: [
         _buildLabeledButton(
           context: context,
-          label: 'قرعة',
+          label: 'قرعة اللاعبين',
           gradient: const LinearGradient(
             colors: [Color(0xFFFF7043), Color(0xFFFF5722)],
             begin: Alignment.topLeft,
@@ -136,10 +142,11 @@ class MainTab extends StatelessWidget {
           ),
           shadowColor: Color(0xFFFF5722),
           child: const Text('⚔️', style: TextStyle(fontSize: 28)),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const RandomTeamsPage()),
-          ),
+          onTap:
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const RandomTeamsPage()),
+              ),
         ),
         const SizedBox(width: 20),
         _buildLabeledButton(
@@ -152,15 +159,16 @@ class MainTab extends StatelessWidget {
           ),
           shadowColor: Color(0xFF43A047),
           child: const Icon(Icons.note_add, size: 34, color: Colors.white),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const NewGamePage()),
-          ),
+          onTap:
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NewGamePage()),
+              ),
         ),
         const SizedBox(width: 20),
         _buildLabeledButton(
           context: context,
-          label: 'مزامنة',
+          label: 'مزامنة بيانات',
           gradient: const LinearGradient(
             colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
             begin: Alignment.topLeft,
@@ -168,10 +176,11 @@ class MainTab extends StatelessWidget {
           ),
           shadowColor: Color(0xFF1565C0),
           child: const Icon(Icons.cloud_sync, size: 32, color: Colors.white),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const SyncPage()),
-          ),
+          onTap:
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SyncPage()),
+              ),
         ),
       ],
     );
