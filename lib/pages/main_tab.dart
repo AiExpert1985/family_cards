@@ -5,6 +5,7 @@ import 'daily_stats_page.dart';
 import 'new_game_page.dart';
 import 'overall_stats_page.dart';
 import 'random_teams_page.dart';
+import 'sync_page.dart';
 
 class MainTab extends StatelessWidget {
   const MainTab({super.key});
@@ -140,7 +141,7 @@ class MainTab extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const RandomTeamsPage()),
           ),
         ),
-        const SizedBox(width: 32),
+        const SizedBox(width: 20),
         _buildLabeledButton(
           context: context,
           label: 'اضافة نتيجة',
@@ -154,6 +155,22 @@ class MainTab extends StatelessWidget {
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const NewGamePage()),
+          ),
+        ),
+        const SizedBox(width: 20),
+        _buildLabeledButton(
+          context: context,
+          label: 'مزامنة',
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          shadowColor: Color(0xFF1565C0),
+          child: const Icon(Icons.cloud_sync, size: 32, color: Colors.white),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SyncPage()),
           ),
         ),
       ],

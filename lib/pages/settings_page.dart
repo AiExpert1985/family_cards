@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/providers.dart';
 import 'players_page.dart';
-import 'sync_page.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -75,23 +74,6 @@ class SettingsPage extends ConsumerWidget {
                 () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const PlayersPage()),
-                ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Card(
-          child: ListTile(
-            leading: const Icon(Icons.sync, color: Colors.teal, size: 32),
-            title: const Text(
-              'مزامنة البيانات',
-              textAlign: TextAlign.right,
-              style: TextStyle(fontSize: 16),
-            ),
-            trailing: const Icon(Icons.arrow_back_ios, size: 16),
-            onTap:
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SyncPage()),
                 ),
           ),
         ),
