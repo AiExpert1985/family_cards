@@ -241,12 +241,18 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
     );
 
     if (result != null) {
+      final selectionChanged = !_setsEqual(currentSelection, result);
+      if (selectionChanged) {
+        final currentRestedIds = ref.read(restedPlayersProvider).value ?? {};
+        final filteredRestedIds = currentRestedIds.intersection(result);
+        await ref.read(restedPlayersProvider.notifier).updateRested(filteredRestedIds);
+        final storage = ref.read(storageServiceProvider);
+        await storage.clearLastTeamResult();
+        setState(() {
+          _result = null;
+        });
+      }
       await ref.read(selectedPlayersProvider.notifier).updateSelection(result);
-      final storage = ref.read(storageServiceProvider);
-      await storage.clearLastTeamResult(); // Add this
-      setState(() {
-        _result = null;
-      });
     }
   }
 

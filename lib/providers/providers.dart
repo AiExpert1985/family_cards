@@ -268,12 +268,16 @@ class SelectedPlayersNotifier extends StateNotifier<AsyncValue<Set<String>>> {
   }
 
   Future<bool> updateSelection(Set<String> newSelection) async {
+    final oldSelection = state.value ?? {};
+    final selectionChanged =
+        oldSelection.length != newSelection.length ||
+        !oldSelection.containsAll(newSelection);
     final success = await _storage.saveSelectedPlayerIds(newSelection);
     if (success) {
       state = AsyncValue.data(newSelection);
-      // Reset cycle state when selection changes
-      await _storage.saveRestedPlayerIds({});
-      await _storage.saveLastSelectedPlayerIdsCheck(newSelection);
+      if (selectionChanged) {
+        await _storage.saveLastSelectedPlayerIdsCheck(newSelection);
+      }
     }
     return success;
   }
