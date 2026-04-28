@@ -206,6 +206,7 @@ class StorageService {
 
   // Anti-cheat setting
   static const String _antiCheatKey = 'antiCheatEnabled';
+  static const String _lastGenerationTimeKey = 'lastGenerationTime';
 
   Future<bool> getAntiCheatEnabled() async {
     final prefs = await SharedPreferences.getInstance();
@@ -216,6 +217,23 @@ class StorageService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_antiCheatKey, value);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<DateTime?> getLastGenerationTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    final iso = prefs.getString(_lastGenerationTimeKey);
+    if (iso == null) return null;
+    return DateTime.tryParse(iso);
+  }
+
+  Future<bool> saveLastGenerationTime(DateTime time) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_lastGenerationTimeKey, time.toIso8601String());
       return true;
     } catch (e) {
       return false;

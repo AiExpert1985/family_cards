@@ -7,6 +7,51 @@ import 'players_page.dart';
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
+  Future<void> _confirmDisableAntiCheat(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final controller = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('تعطيل الحماية', textAlign: TextAlign.right),
+            content: TextField(
+              controller: controller,
+              obscureText: true,
+              textAlign: TextAlign.center,
+              decoration: const InputDecoration(hintText: 'أدخل كلمة المرور'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('إلغاء'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('تأكيد'),
+              ),
+            ],
+          ),
+    );
+    final password = controller.text;
+    controller.dispose();
+
+    if (!context.mounted) return;
+
+    if (confirmed == true && password == 'cheat') {
+      ref.read(antiCheatEnabledProvider.notifier).setEnabled(false);
+    } else if (confirmed == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('كلمة المرور خاطئة', textAlign: TextAlign.center),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _resetApp(BuildContext context, WidgetRef ref) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -92,8 +137,13 @@ class SettingsPage extends ConsumerWidget {
               style: TextStyle(fontSize: 12),
             ),
             value: ref.watch(antiCheatEnabledProvider),
-            onChanged: (value) =>
-                ref.read(antiCheatEnabledProvider.notifier).setEnabled(value),
+            onChanged: (value) {
+              if (value) {
+                ref.read(antiCheatEnabledProvider.notifier).setEnabled(true);
+              } else {
+                _confirmDisableAntiCheat(context, ref);
+              }
+            },
           ),
         ),
         const SizedBox(height: 12),

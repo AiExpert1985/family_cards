@@ -31,6 +31,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
       await ref.read(selectedPlayersProvider.notifier).loadSelectedPlayers();
       await ref.read(restedPlayersProvider.notifier).loadRestedPlayers();
       await _loadLastResult();
+      await _loadLastGenerationTime();
     });
   }
 
@@ -121,15 +122,30 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
     });
   }
 
+  Future<void> _loadLastGenerationTime() async {
+    final storage = ref.read(storageServiceProvider);
+    final time = await storage.getLastGenerationTime();
+    if (mounted) {
+      setState(() => _lastGenerationTime = time);
+    }
+  }
+
   Future<void> _tryGenerateTeams() async {
     final antiCheatEnabled = ref.read(antiCheatEnabledProvider);
     if (antiCheatEnabled && _lastGenerationTime != null) {
       final elapsed = DateTime.now().difference(_lastGenerationTime!);
-      if (elapsed.inMinutes < 5) {
+      final remaining = const Duration(minutes: 5) - elapsed;
+      if (remaining > Duration.zero) {
         if (mounted) {
+          final minutes = remaining.inMinutes;
+          final parts = <String>[];
+          if (minutes > 0) parts.add('$minutes دقيقة');
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('يجب أن تمر 5 دقائق قبل توليد قرعة جديدة'),
+            SnackBar(
+              content: Text(
+                'يجب أن تمر $minutes دقيقة قبل توليد قرعة جديدة',
+                textAlign: TextAlign.center,
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -195,7 +211,9 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
 
     // Save result after setting state
     if (result.isSuccess) {
-      _lastGenerationTime = DateTime.now();
+      final now = DateTime.now();
+      _lastGenerationTime = now;
+      await storage.saveLastGenerationTime(now);
       await _saveResult(result);
     }
   }
