@@ -204,6 +204,24 @@ class StorageService {
     }
   }
 
+  // Anti-cheat setting
+  static const String _antiCheatKey = 'antiCheatEnabled';
+
+  Future<bool> getAntiCheatEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_antiCheatKey) ?? true;
+  }
+
+  Future<bool> saveAntiCheatEnabled(bool value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_antiCheatKey, value);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // Pairing reset date tracking
   Future<String?> getLastPairingResetDate() async {
     final prefs = await SharedPreferences.getInstance();
@@ -223,7 +241,8 @@ class StorageService {
   Future<bool> shouldResetPairings() async {
     final lastResetDate = await getLastPairingResetDate();
     final today = DateTime.now();
-    final todayString = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final todayString =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
     return lastResetDate != todayString;
   }
 }

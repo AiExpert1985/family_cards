@@ -79,6 +79,25 @@ class SettingsPage extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         Card(
+          child: SwitchListTile(
+            secondary: const Icon(Icons.lock_clock, color: Colors.teal, size: 32),
+            title: const Text(
+              'ضد احتيال القرعة',
+              textAlign: TextAlign.right,
+              style: TextStyle(fontSize: 16),
+            ),
+            subtitle: const Text(
+              'منع توليد قرعة جديدة قبل مرور 5 دقائق',
+              textAlign: TextAlign.right,
+              style: TextStyle(fontSize: 12),
+            ),
+            value: ref.watch(antiCheatEnabledProvider),
+            onChanged: (value) =>
+                ref.read(antiCheatEnabledProvider.notifier).setEnabled(value),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
           color: Colors.red.shade50,
           child: ListTile(
             leading: const Icon(

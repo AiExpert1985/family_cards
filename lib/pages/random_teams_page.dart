@@ -20,6 +20,7 @@ class RandomTeamsPage extends ConsumerStatefulWidget {
 class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
   TeamGenerationResult? _result;
   bool _isGenerating = false;
+  DateTime? _lastGenerationTime;
 
   @override
   void initState() {
@@ -120,6 +121,25 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
     });
   }
 
+  Future<void> _tryGenerateTeams() async {
+    final antiCheatEnabled = ref.read(antiCheatEnabledProvider);
+    if (antiCheatEnabled && _lastGenerationTime != null) {
+      final elapsed = DateTime.now().difference(_lastGenerationTime!);
+      if (elapsed.inMinutes < 5) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('يجب أن تمر 5 دقائق قبل توليد قرعة جديدة'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+    }
+    await _generateTeams();
+  }
+
   Future<void> _generateTeams() async {
     setState(() => _isGenerating = true);
 
@@ -175,6 +195,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
 
     // Save result after setting state
     if (result.isSuccess) {
+      _lastGenerationTime = DateTime.now();
       await _saveResult(result);
     }
   }
@@ -376,7 +397,7 @@ class _RandomTeamsPageState extends ConsumerState<RandomTeamsPage> {
                   ),
                 ),
                 onPressed:
-                    canGenerate && !_isGenerating ? _generateTeams : null,
+                    canGenerate && !_isGenerating ? _tryGenerateTeams : null,
               ),
             ),
           ),

@@ -314,3 +314,26 @@ class RestedPlayersNotifier extends StateNotifier<AsyncValue<Set<String>>> {
 }
 
 final syncServiceProvider = Provider((ref) => SyncService());
+
+// Anti-cheat cooldown setting
+final antiCheatEnabledProvider =
+    StateNotifierProvider<AntiCheatNotifier, bool>((ref) {
+      return AntiCheatNotifier(ref.read(storageServiceProvider));
+    });
+
+class AntiCheatNotifier extends StateNotifier<bool> {
+  final StorageService _storage;
+
+  AntiCheatNotifier(this._storage) : super(false) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    state = await _storage.getAntiCheatEnabled();
+  }
+
+  Future<void> setEnabled(bool value) async {
+    await _storage.saveAntiCheatEnabled(value);
+    state = value;
+  }
+}
