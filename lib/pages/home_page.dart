@@ -22,7 +22,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       case 1:
         return 'الإعدادات';
       default:
-        return 'لعبة الورق';
+        return 'كونكان الحاسبة';
     }
   }
 
@@ -30,7 +30,10 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          _title,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         flexibleSpace: Container(
           decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
         ),
@@ -45,7 +48,10 @@ class _HomePageState extends ConsumerState<HomePage> {
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'الرئيسية'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'الإعدادات'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'الإعدادات',
+          ),
         ],
       ),
     );
